@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QDII海外基金收益排行 · 2026-06-05</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f3f8; color: #1a2035; font-size: 12px; }
+
+  .main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+
+  .stats-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stat-card { background: white; border-radius: 10px; padding: 12px 16px; flex: 1; min-width: 100px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); border-top: 3px solid; text-align: center; }
+  .stat-card .val { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .stat-card .lbl { font-size: 11px; margin-top: 3px; }
+  .stat-card.blue    { border-color: #1a5fac; }
+  .stat-card.blue .val,    .stat-card.blue .lbl    { color: #1a5fac; }
+  .stat-card.red     { border-color: #c0392b; }
+  .stat-card.red .val,     .stat-card.red .lbl     { color: #c0392b; }
+  .stat-card.green   { border-color: #27ae60; }
+  .stat-card.green .val,   .stat-card.green .lbl   { color: #27ae60; }
+  .stat-card.orange  { border-color: #e67e22; }
+  .stat-card.orange .val,  .stat-card.orange .lbl  { color: #e67e22; }
+  .stat-card.purple  { border-color: #8e44ad; }
+  .stat-card.purple .val,  .stat-card.purple .lbl  { color: #8e44ad; }
+  .stat-card.gray    { border-color: #888; }
+  .stat-card.gray .val,    .stat-card.gray .lbl    { color: #888; }
+
+  .section-title {
+    display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px;
+    margin: 24px 0 14px;
+    font-size: 20px; font-weight: 800; color: #0d2b6e;
+    letter-spacing: 2px;
+    border-left: 5px solid #0d2b6e;
+    padding: 4px 12px;
+    background: white;
+    border-radius: 6px;
+  }
+  .section-title .badge { font-size: 12px; padding: 3px 12px; border-radius: 20px; font-weight: 600; margin-left: 10px; letter-spacing: 0.5px; }
+
+  .table-wrap { overflow-x: auto; }
+
+  .fund-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.07); font-size: 13px; }
+  .fund-table thead tr { background: linear-gradient(90deg, #0d2b6e, #1a5fac); color: white; }
+  .fund-table thead th { padding: 9px 5px; font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; letter-spacing: 0.3px; border-right: 1px solid rgba(255,255,255,0.15); }
+  .fund-table thead th:last-child { border-right: none; }
+  .fund-table thead th:first-child { text-align: center; padding: 9px 2px; min-width: 32px; }
+  .fund-table tbody tr { border-bottom: 1px solid #f0f3f8; transition: all 0.2s ease; }
+  .fund-table tbody tr:last-child { border-bottom: none; }
+  .fund-table tbody tr:hover { background: #f6f9ff !important; transform: translateX(6px); box-shadow: 0 2px 12px rgba(26,95,172,0.10); }
+  .fund-table tbody tr.row-even { background: #fafbfe; }
+  .fund-table tbody tr.row-odd { background: #fff; }
+  .fund-table td { padding: 5px 4px; text-align: center; vertical-align: middle; border-right: 1px solid #f0f3f8; line-height: 1.5; white-space: nowrap; }
+  .fund-table td:nth-child(n+4) { min-width: 90px; }
+  .fund-table td:last-child { border-right: none; }
+  .fund-table td:first-child { text-align: center; padding: 5px 2px; border-right: none; }
+  .fund-table td:nth-child(2) { text-align: left; min-width: 180px; padding-left: 14px; }
+  .fund-table td:nth-child(3) { text-align: center; min-width: 80px; }
+
+  /* 今年以来列高亮 */
+  .fund-table thead th:nth-child(10) { background: rgba(255,255,255,0.18); font-weight: 800; font-size: 12px; }
+  .fund-table td:nth-child(10) { background: #fffdf5; font-weight: 700; border-left: 2px solid #e29a3b; }
+  .col-fund { font-size: 14px; }
+  .col-fund a { font-weight: 700; margin-right: 6px; color: #1a5fac; font-size: 15px; text-decoration: none; }
+  .col-fund .fname { font-weight: 600; color: #1a2035; }
+  .col-fund .fsuffix { font-size: 11px; color: #999; margin-left: 3px; }
+
+  .cell-ret { font-size: 15px; font-weight: 700; }
+  .cell-rank { font-size: 12px; color: #666; margin-top: 2px; }
+  .cell-pct { font-size: 12px; margin-top: 2px; }
+
+  .up { color: #e63946; }
+  .dn { color: #2ba84a; }
+  .neutral { color: #888; font-weight: 600; }
+  .na { color: #ccc; font-size: 10px; }
+
+  .pct-top  { color: #c0392b; font-weight: 700; }
+  .pct-good { color: #d94f3a; background: #fdecea; padding: 0 2px; border-radius: 2px; }
+  .pct-mid  { color: #2e7d32; background: #e8f5e9; padding: 0 2px; border-radius: 2px; }
+  .pct-bad  { color: #1a7a3c; font-weight: 700; }
+
+  .rank-num { color: #555; font-family: monospace; font-size: 12px; }
+
+  .fund-name-cell { display: flex; flex-direction: column; gap: 2px; }
+  .fund-name-cell .fname { font-size: 12px; font-weight: 600; color: #1a2035; }
+  .fund-name-cell .fsuffix { font-size: 10px; color: #999; }
+
+  .tag {
+    display: inline-block;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .tag-open  { background: #e6f7ee; color: #27ae60; border: 1px solid #b7ebd5; }
+  .tag-limit { background: #fff7e6; color: #e67e22; border: 1px solid #ffd591; }
+  .tag-stop  { background: #f5f5f5; color: #999; border: 1px solid #ddd; }
+  .tag-etf   { background: #e6f0ff; color: #1a5fac; border: 1px solid #bcd4ff; }
+
+  .col-today { min-width: 56px; }
+
+  .page-footer { text-align: center; color: #aaa; font-size: 10px; padding: 16px; margin-top: 8px; }
+
+  .note-bar {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    padding: 8px 16px; font-size: 11px; color: #888;
+    background: #fafbfe; border-top: 1px solid #f0f3f8; border-radius: 0 0 8px 8px;
+  }
+
+  /* === 美股重仓股板块 === */
+  .holdings-section {
+    margin-top: 20px;
+  }
+  .holdings-table {
+    width: 100%; border-collapse: collapse; background: white;
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07); font-size: 13px;
+  }
+  .holdings-table thead tr {
+    background: linear-gradient(90deg, #1a2035, #2c3e50); color: white;
+  }
+  .holdings-table thead th {
+    padding: 8px 10px; font-size: 11px; font-weight: 600; text-align: left;
+    white-space: nowrap;
+  }
+  .holdings-table tbody tr {
+    border-bottom: 1px solid #f0f3f8;
+  }
+  .holdings-table tbody tr:hover {
+    background: #f6f9ff;
+  }
+  .holdings-table td {
+    padding: 8px 10px; vertical-align: middle;
+  }
+  .stock-code {
+    font-family: monospace; font-weight: 700; color: #1a5fac; width: 80px;
+  }
+  .stock-name {
+    font-weight: 600; width: 140px;
+  }
+  .stock-freq {
+    min-width: 140px;
+  }
+  .stock-desc {
+    font-size: 11px; color: #718097; line-height: 1.5; max-width: 340px;
+  }
+  .freq-bar-wrap {
+    display: inline-block; width: 80px; height: 8px;
+    background: #f0f0f0; border-radius: 4px; vertical-align: middle; margin-right: 8px;
+  }
+  .freq-bar-fill {
+    height: 8px; border-radius: 4px;
+  }
+  .freq-num {
+    font-weight: 700; color: #1a2035; font-size: 13px;
+  }
+
+  @media (max-width: 1100px) { .fund-table { font-size: 10px; } .fund-table td:nth-child(3) { max-width: 140px; } }
+</style>
+</head>
+<body>
+
+<div class="main">
+
+  <div class="stats-row">
+    <div class="stat-card blue">
+      <div class="val">24</div>
+      <div class="lbl">基金总数</div>
+    </div>
+    <div class="stat-card red">
+      <div class="val">4</div>
+      <div class="lbl">今日上涨</div>
+    </div>
+    <div class="stat-card green">
+      <div class="val">20</div>
+      <div class="lbl">今日下跌</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="val">+49.1%</div>
+      <div class="lbl">YTD平均收益</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="val">+92.5%</div>
+      <div class="lbl">YTD最高收益</div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    QDII基金收益排行
+    <span class="badge" style="background:#fff3e0;color:#e29a3b">24只 · 按今年以来收益排序</span>
+  </div>
+
+  <div class="table-wrap">
+  <table class="fund-table">
+    <thead><tr>
+      <th>序号</th>
+      <th>基金（代码+简称）</th>
+      <th>申购状态/限额</th>
+      <th>最近1日</th>
+      <th>近1周<br>收益/排名</th>
+      <th>近1月<br>收益/排名</th>
+      <th>近3月<br>收益/排名</th>
+      <th>近6月<br>收益/排名</th>
+      <th>近1年<br>收益/排名</th>
+      <th>今年以来<br>收益/排名</th>
+    </tr></thead>
+    <tbody>
+    <tr class="row-even">
+        <td>1</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/016664.html" target="_blank">016664</a> <span class="fname">天弘全球高端制造混合</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额100元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-1.27%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+3.23%</span></div><div class="cell-rank"><span class="rank-num">13 | 112</span></div><div class="cell-pct"><span class="pct-good">前12%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+30.26%</span></div><div class="cell-rank"><span class="rank-num">1 | 112</span></div><div class="cell-pct"><span class="pct-top">前1%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+66.16%</span></div><div class="cell-rank"><span class="rank-num">3 | 111</span></div><div class="cell-pct"><span class="pct-top">前3%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+101.48%</span></div><div class="cell-rank"><span class="rank-num">1 | 106</span></div><div class="cell-pct"><span class="pct-top">前1%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+201.24%</span></div><div class="cell-rank"><span class="rank-num">5 | 96</span></div><div class="cell-pct"><span class="pct-top">前5%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+92.50%</span></div><div class="cell-rank"><span class="rank-num">1 | 108</span></div><div class="cell-pct"><span class="pct-top">前1%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>2</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/002891.html" target="_blank">002891</a> <span class="fname">华夏移动互联灵活配置混合</span><span class="fsuffix">(QDII)人民币A</span></td>
+        <td><span class="tag tag-limit">限大额200元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-0.95%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+5.84%</span></div><div class="cell-rank"><span class="rank-num">3 | 27</span></div><div class="cell-pct"><span class="pct-good">前11%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+25.39%</span></div><div class="cell-rank"><span class="rank-num">5 | 27</span></div><div class="cell-pct"><span class="pct-good">前19%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+63.16%</span></div><div class="cell-rank"><span class="rank-num">3 | 27</span></div><div class="cell-pct"><span class="pct-good">前11%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+89.37%</span></div><div class="cell-rank"><span class="rank-num">3 | 27</span></div><div class="cell-pct"><span class="pct-good">前11%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+144.62%</span></div><div class="cell-rank"><span class="rank-num">3 | 25</span></div><div class="cell-pct"><span class="pct-good">前12%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+90.06%</span></div><div class="cell-rank"><span class="rank-num">3 | 27</span></div><div class="cell-pct"><span class="pct-good">前11%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>3</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/539002.html" target="_blank">539002</a> <span class="fname">建信新兴市场混合</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额30元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-2.49%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+4.70%</span></div><div class="cell-rank"><span class="rank-num">5 | 112</span></div><div class="cell-pct"><span class="pct-top">前4%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+29.48%</span></div><div class="cell-rank"><span class="rank-num">3 | 112</span></div><div class="cell-pct"><span class="pct-top">前3%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+59.40%</span></div><div class="cell-rank"><span class="rank-num">7 | 111</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+89.26%</span></div><div class="cell-rank"><span class="rank-num">5 | 106</span></div><div class="cell-pct"><span class="pct-top">前5%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+154.91%</span></div><div class="cell-rank"><span class="rank-num">7 | 96</span></div><div class="cell-pct"><span class="pct-top">前7%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+88.87%</span></div><div class="cell-rank"><span class="rank-num">5 | 108</span></div><div class="cell-pct"><span class="pct-top">前5%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>4</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/012920.html" target="_blank">012920</a> <span class="fname">易方达全球成长精选混合</span><span class="fsuffix">(QDII)人民币A</span></td>
+        <td><span class="tag tag-limit">限大额20元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-0.98%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+4.72%</span></div><div class="cell-rank"><span class="rank-num">3 | 112</span></div><div class="cell-pct"><span class="pct-top">前3%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+28.14%</span></div><div class="cell-rank"><span class="rank-num">7 | 112</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+65.66%</span></div><div class="cell-rank"><span class="rank-num">5 | 111</span></div><div class="cell-pct"><span class="pct-top">前5%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+89.07%</span></div><div class="cell-rank"><span class="rank-num">6 | 106</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+217.90%</span></div><div class="cell-rank"><span class="rank-num">3 | 96</span></div><div class="cell-pct"><span class="pct-top">前3%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+85.59%</span></div><div class="cell-rank"><span class="rank-num">7 | 108</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>5</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/006373.html" target="_blank">006373</a> <span class="fname">国富全球科技互联混合</span><span class="fsuffix">(QDII)人民币A</span></td>
+        <td><span class="tag tag-limit">限大额100元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-1.06%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+3.18%</span></div><div class="cell-rank"><span class="rank-num">20 | 112</span></div><div class="cell-pct"><span class="pct-good">前18%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+23.96%</span></div><div class="cell-rank"><span class="rank-num">17 | 112</span></div><div class="cell-pct"><span class="pct-good">前15%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+50.16%</span></div><div class="cell-rank"><span class="rank-num">15 | 111</span></div><div class="cell-pct"><span class="pct-good">前14%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+79.87%</span></div><div class="cell-rank"><span class="rank-num">11 | 106</span></div><div class="cell-pct"><span class="pct-good">前10%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+115.15%</span></div><div class="cell-rank"><span class="rank-num">13 | 96</span></div><div class="cell-pct"><span class="pct-good">前14%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+76.84%</span></div><div class="cell-rank"><span class="rank-num">13 | 108</span></div><div class="cell-pct"><span class="pct-good">前12%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>6</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/005698.html" target="_blank">005698</a> <span class="fname">华夏全球科技先锋混合</span><span class="fsuffix">(QDII)A(人民币)</span></td>
+        <td><span class="tag tag-limit">限大额2500元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-0.26%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+3.73%</span></div><div class="cell-rank"><span class="rank-num">11 | 112</span></div><div class="cell-pct"><span class="pct-top">前10%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+24.93%</span></div><div class="cell-rank"><span class="rank-num">13 | 112</span></div><div class="cell-pct"><span class="pct-good">前12%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+54.16%</span></div><div class="cell-rank"><span class="rank-num">11 | 111</span></div><div class="cell-pct"><span class="pct-top">前10%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+73.36%</span></div><div class="cell-rank"><span class="rank-num">15 | 106</span></div><div class="cell-pct"><span class="pct-good">前14%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+109.02%</span></div><div class="cell-rank"><span class="rank-num">17 | 96</span></div><div class="cell-pct"><span class="pct-good">前18%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+75.64%</span></div><div class="cell-rank"><span class="rank-num">15 | 108</span></div><div class="cell-pct"><span class="pct-good">前14%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>7</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/457001.html" target="_blank">457001</a> <span class="fname">国富亚洲机会股票</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额200元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-1.99%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+0.13%</span></div><div class="cell-rank"><span class="rank-num">56 | 84</span></div><div class="cell-pct"><span class="pct-bad">后33%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+20.32%</span></div><div class="cell-rank"><span class="rank-num">11 | 85</span></div><div class="cell-pct"><span class="pct-good">前13%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+50.23%</span></div><div class="cell-rank"><span class="rank-num">9 | 78</span></div><div class="cell-pct"><span class="pct-good">前12%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+82.23%</span></div><div class="cell-rank"><span class="rank-num">1 | 76</span></div><div class="cell-pct"><span class="pct-top">前1%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+146.36%</span></div><div class="cell-rank"><span class="rank-num">3 | 74</span></div><div class="cell-pct"><span class="pct-top">前4%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+74.54%</span></div><div class="cell-rank"><span class="rank-num">2 | 76</span></div><div class="cell-pct"><span class="pct-top">前3%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>8</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/501225.html" target="_blank">501225</a> <span class="fname">景顺长城全球半导体芯片股票</span><span class="fsuffix">(QDII-LOF)A(人民币)</span></td>
+        <td><span class="tag tag-stop">暂停申购</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-0.94%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+2.44%</span></div><div class="cell-rank"><span class="rank-num">15 | 84</span></div><div class="cell-pct"><span class="pct-good">前18%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+22.69%</span></div><div class="cell-rank"><span class="rank-num">5 | 85</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+54.60%</span></div><div class="cell-rank"><span class="rank-num">7 | 78</span></div><div class="cell-pct"><span class="pct-top">前9%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+68.77%</span></div><div class="cell-rank"><span class="rank-num">6 | 76</span></div><div class="cell-pct"><span class="pct-top">前8%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+133.43%</span></div><div class="cell-rank"><span class="rank-num">6 | 74</span></div><div class="cell-pct"><span class="pct-top">前8%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+70.15%</span></div><div class="cell-rank"><span class="rank-num">4 | 76</span></div><div class="cell-pct"><span class="pct-top">前5%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>9</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/017730.html" target="_blank">017730</a> <span class="fname">嘉实全球产业升级股票发起式</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额100元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-0.15%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+1.93%</span></div><div class="cell-rank"><span class="rank-num">23 | 84</span></div><div class="cell-pct"><span class="pct-mid">前27%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+21.24%</span></div><div class="cell-rank"><span class="rank-num">9 | 85</span></div><div class="cell-pct"><span class="pct-good">前11%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+58.05%</span></div><div class="cell-rank"><span class="rank-num">4 | 78</span></div><div class="cell-pct"><span class="pct-top">前5%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+72.77%</span></div><div class="cell-rank"><span class="rank-num">4 | 76</span></div><div class="cell-pct"><span class="pct-top">前5%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+159.99%</span></div><div class="cell-rank"><span class="rank-num">1 | 74</span></div><div class="cell-pct"><span class="pct-top">前1%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+69.21%</span></div><div class="cell-rank"><span class="rank-num">6 | 76</span></div><div class="cell-pct"><span class="pct-top">前8%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>10</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/008253.html" target="_blank">008253</a> <span class="fname">华宝致远混合</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额1000元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-2.10%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+4.59%</span></div><div class="cell-rank"><span class="rank-num">7 | 112</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+25.32%</span></div><div class="cell-rank"><span class="rank-num">11 | 112</span></div><div class="cell-pct"><span class="pct-top">前10%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+48.45%</span></div><div class="cell-rank"><span class="rank-num">17 | 111</span></div><div class="cell-pct"><span class="pct-good">前15%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+59.33%</span></div><div class="cell-rank"><span class="rank-num">19 | 106</span></div><div class="cell-pct"><span class="pct-good">前18%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+105.06%</span></div><div class="cell-rank"><span class="rank-num">19 | 96</span></div><div class="cell-pct"><span class="pct-good">前20%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+62.37%</span></div><div class="cell-rank"><span class="rank-num">17 | 108</span></div><div class="cell-pct"><span class="pct-good">前16%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>11</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/100055.html" target="_blank">100055</a> <span class="fname">富国全球科技互联网股票</span><span class="fsuffix">(QDII)人民币份额</span></td>
+        <td><span class="tag tag-limit">限大额1000元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-0.48%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+3.36%</span></div><div class="cell-rank"><span class="rank-num">10 | 84</span></div><div class="cell-pct"><span class="pct-good">前12%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+25.54%</span></div><div class="cell-rank"><span class="rank-num">1 | 85</span></div><div class="cell-pct"><span class="pct-top">前1%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+61.92%</span></div><div class="cell-rank"><span class="rank-num">1 | 78</span></div><div class="cell-pct"><span class="pct-top">前1%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+62.66%</span></div><div class="cell-rank"><span class="rank-num">8 | 76</span></div><div class="cell-pct"><span class="pct-good">前11%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+110.41%</span></div><div class="cell-rank"><span class="rank-num">8 | 74</span></div><div class="cell-pct"><span class="pct-good">前11%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+61.84%</span></div><div class="cell-rank"><span class="rank-num">8 | 76</span></div><div class="cell-pct"><span class="pct-good">前11%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>12</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/006555.html" target="_blank">006555</a> <span class="fname">浦银安盛全球智能科技股票</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-stop">暂停申购</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-2.19%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+5.30%</span></div><div class="cell-rank"><span class="rank-num">3 | 84</span></div><div class="cell-pct"><span class="pct-top">前4%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+21.64%</span></div><div class="cell-rank"><span class="rank-num">7 | 85</span></div><div class="cell-pct"><span class="pct-top">前8%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+48.62%</span></div><div class="cell-rank"><span class="rank-num">11 | 78</span></div><div class="cell-pct"><span class="pct-good">前14%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+57.78%</span></div><div class="cell-rank"><span class="rank-num">11 | 76</span></div><div class="cell-pct"><span class="pct-good">前14%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+94.88%</span></div><div class="cell-rank"><span class="rank-num">12 | 74</span></div><div class="cell-pct"><span class="pct-good">前16%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+58.06%</span></div><div class="cell-rank"><span class="rank-num">11 | 76</span></div><div class="cell-pct"><span class="pct-good">前14%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>13</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/018229.html" target="_blank">018229</a> <span class="fname">易方达全球优质企业混合</span><span class="fsuffix">(QDII)A(人民币份额)</span></td>
+        <td><span class="tag tag-limit">限大额1万/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="up">+0.03%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+1.87%</span></div><div class="cell-rank"><span class="rank-num">29 | 112</span></div><div class="cell-pct"><span class="pct-mid">前26%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+17.60%</span></div><div class="cell-rank"><span class="rank-num">21 | 112</span></div><div class="cell-pct"><span class="pct-good">前19%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+36.72%</span></div><div class="cell-rank"><span class="rank-num">21 | 111</span></div><div class="cell-pct"><span class="pct-good">前19%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+56.46%</span></div><div class="cell-rank"><span class="rank-num">21 | 106</span></div><div class="cell-pct"><span class="pct-good">前20%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+100.83%</span></div><div class="cell-rank"><span class="rank-num">21 | 96</span></div><div class="cell-pct"><span class="pct-good">前22%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+53.35%</span></div><div class="cell-rank"><span class="rank-num">21 | 108</span></div><div class="cell-pct"><span class="pct-good">前19%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>14</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/501226.html" target="_blank">501226</a> <span class="fname">长城全球新能源车股票发起式</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额500元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-1.82%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+2.06%</span></div><div class="cell-rank"><span class="rank-num">18 | 84</span></div><div class="cell-pct"><span class="pct-good">前21%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+18.94%</span></div><div class="cell-rank"><span class="rank-num">15 | 85</span></div><div class="cell-pct"><span class="pct-good">前18%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+42.48%</span></div><div class="cell-rank"><span class="rank-num">15 | 78</span></div><div class="cell-pct"><span class="pct-good">前19%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+50.60%</span></div><div class="cell-rank"><span class="rank-num">16 | 76</span></div><div class="cell-pct"><span class="pct-good">前21%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+92.07%</span></div><div class="cell-rank"><span class="rank-num">14 | 74</span></div><div class="cell-pct"><span class="pct-good">前19%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+51.08%</span></div><div class="cell-rank"><span class="rank-num">16 | 76</span></div><div class="cell-pct"><span class="pct-good">前21%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>15</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/270023.html" target="_blank">270023</a> <span class="fname">广发全球精选股票</span><span class="fsuffix">(QDII)人民币A</span></td>
+        <td><span class="tag tag-limit">限大额100元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-1.31%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+0.63%</span></div><div class="cell-rank"><span class="rank-num">48 | 84</span></div><div class="cell-pct"><span class="pct-bad">后43%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+18.68%</span></div><div class="cell-rank"><span class="rank-num">18 | 85</span></div><div class="cell-pct"><span class="pct-good">前21%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+36.91%</span></div><div class="cell-rank"><span class="rank-num">18 | 78</span></div><div class="cell-pct"><span class="pct-good">前23%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+45.93%</span></div><div class="cell-rank"><span class="rank-num">19 | 76</span></div><div class="cell-pct"><span class="pct-good">前25%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+69.85%</span></div><div class="cell-rank"><span class="rank-num">22 | 74</span></div><div class="cell-pct"><span class="pct-mid">前30%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+47.69%</span></div><div class="cell-rank"><span class="rank-num">18 | 76</span></div><div class="cell-pct"><span class="pct-good">前24%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>16</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/016701.html" target="_blank">016701</a> <span class="fname">银华海外数字经济量化选股混合发起式</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额10万/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-1.02%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+2.16%</span></div><div class="cell-rank"><span class="rank-num">25 | 112</span></div><div class="cell-pct"><span class="pct-good">前22%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+16.57%</span></div><div class="cell-rank"><span class="rank-num">23 | 112</span></div><div class="cell-pct"><span class="pct-good">前21%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+33.82%</span></div><div class="cell-rank"><span class="rank-num">23 | 111</span></div><div class="cell-pct"><span class="pct-good">前21%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+23.66%</span></div><div class="cell-rank"><span class="rank-num">26 | 106</span></div><div class="cell-pct"><span class="pct-good">前25%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+52.42%</span></div><div class="cell-rank"><span class="rank-num">24 | 96</span></div><div class="cell-pct"><span class="pct-good">前25%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+25.76%</span></div><div class="cell-rank"><span class="rank-num">26 | 108</span></div><div class="cell-pct"><span class="pct-good">前24%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>17</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/020712.html" target="_blank">020712</a> <span class="fname">华安三菱日联日经225ETF发起式联接</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额10元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-1.15%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+0.16%</span></div><div class="cell-rank"><span class="rank-num">34 | 153</span></div><div class="cell-pct"><span class="pct-good">前22%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+11.16%</span></div><div class="cell-rank"><span class="rank-num">9 | 151</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+16.45%</span></div><div class="cell-rank"><span class="rank-num">9 | 151</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+23.19%</span></div><div class="cell-rank"><span class="rank-num">8 | 149</span></div><div class="cell-pct"><span class="pct-top">前5%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+47.10%</span></div><div class="cell-rank"><span class="rank-num">9 | 139</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+25.25%</span></div><div class="cell-rank"><span class="rank-num">9 | 149</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>18</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/017091.html" target="_blank">017091</a> <span class="fname">景顺长城纳斯达克科技ETF联接人民币</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-stop">暂停申购</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-1.08%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+1.44%</span></div><div class="cell-rank"><span class="rank-num">142 | 360</span></div><div class="cell-pct"><span class="pct-mid">前39%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+14.55%</span></div><div class="cell-rank"><span class="rank-num">8 | 360</span></div><div class="cell-pct"><span class="pct-top">前2%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+29.48%</span></div><div class="cell-rank"><span class="rank-num">6 | 360</span></div><div class="cell-pct"><span class="pct-top">前2%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+20.58%</span></div><div class="cell-rank"><span class="rank-num">26 | 356</span></div><div class="cell-pct"><span class="pct-top">前7%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+45.62%</span></div><div class="cell-rank"><span class="rank-num">20 | 342</span></div><div class="cell-pct"><span class="pct-top">前6%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+23.71%</span></div><div class="cell-rank"><span class="rank-num">27 | 356</span></div><div class="cell-pct"><span class="pct-top">前8%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>19</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/501312.html" target="_blank">501312</a> <span class="fname">华宝海外科技股票(QDII-LOF)A</span><span class="fsuffix"></span></td>
+        <td><span class="tag tag-limit">限大额100元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="up">+0.18%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+1.26%</span></div><div class="cell-rank"><span class="rank-num">33 | 84</span></div><div class="cell-pct"><span class="pct-mid">前39%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+12.52%</span></div><div class="cell-rank"><span class="rank-num">25 | 85</span></div><div class="cell-pct"><span class="pct-mid">前29%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+21.10%</span></div><div class="cell-rank"><span class="rank-num">31 | 78</span></div><div class="cell-pct"><span class="pct-mid">前40%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+16.42%</span></div><div class="cell-rank"><span class="rank-num">39 | 76</span></div><div class="cell-pct"><span class="pct-bad">后49%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+48.68%</span></div><div class="cell-rank"><span class="rank-num">32 | 74</span></div><div class="cell-pct"><span class="pct-mid">前43%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+20.98%</span></div><div class="cell-rank"><span class="rank-num">35 | 76</span></div><div class="cell-pct"><span class="pct-mid">前46%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>20</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/270042.html" target="_blank">270042</a> <span class="fname">广发纳斯达克100ETF联接</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额10元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-0.49%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+0.55%</span></div><div class="cell-rank"><span class="rank-num">221 | 360</span></div><div class="cell-pct"><span class="pct-bad">后39%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+10.04%</span></div><div class="cell-rank"><span class="rank-num">49 | 360</span></div><div class="cell-pct"><span class="pct-good">前14%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+19.34%</span></div><div class="cell-rank"><span class="rank-num">47 | 360</span></div><div class="cell-pct"><span class="pct-good">前13%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+14.31%</span></div><div class="cell-rank"><span class="rank-num">71 | 356</span></div><div class="cell-pct"><span class="pct-good">前20%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+31.15%</span></div><div class="cell-rank"><span class="rank-num">78 | 342</span></div><div class="cell-pct"><span class="pct-good">前23%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+16.50%</span></div><div class="cell-rank"><span class="rank-num">74 | 356</span></div><div class="cell-pct"><span class="pct-good">前21%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>21</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/050025.html" target="_blank">050025</a> <span class="fname">博时标普500ETF联接</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-stop">暂停申购</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="up">+0.41%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+0.23%</span></div><div class="cell-rank"><span class="rank-num">268 | 360</span></div><div class="cell-pct"><span class="pct-bad">后26%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+4.38%</span></div><div class="cell-rank"><span class="rank-num">113 | 360</span></div><div class="cell-pct"><span class="pct-mid">前31%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+8.78%</span></div><div class="cell-rank"><span class="rank-num">111 | 360</span></div><div class="cell-pct"><span class="pct-mid">前31%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+6.66%</span></div><div class="cell-rank"><span class="rank-num">145 | 356</span></div><div class="cell-pct"><span class="pct-mid">前41%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+19.95%</span></div><div class="cell-rank"><span class="rank-num">140 | 342</span></div><div class="cell-pct"><span class="pct-mid">前41%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+7.45%</span></div><div class="cell-rank"><span class="rank-num">148 | 356</span></div><div class="cell-pct"><span class="pct-mid">前42%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>22</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/017144.html" target="_blank">017144</a> <span class="fname">华宝海外新能源汽车股票发起式</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额1万/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-2.24%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+5.94%</span></div><div class="cell-rank"><span class="rank-num">1 | 84</span></div><div class="cell-pct"><span class="pct-top">前1%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+8.93%</span></div><div class="cell-rank"><span class="rank-num">29 | 85</span></div><div class="cell-pct"><span class="pct-mid">前34%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+20.50%</span></div><div class="cell-rank"><span class="rank-num">33 | 78</span></div><div class="cell-pct"><span class="pct-mid">前42%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+5.46%</span></div><div class="cell-rank"><span class="rank-num">51 | 76</span></div><div class="cell-pct"><span class="pct-bad">后33%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+21.97%</span></div><div class="cell-rank"><span class="rank-num">50 | 74</span></div><div class="cell-pct"><span class="pct-bad">后32%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+7.21%</span></div><div class="cell-rank"><span class="rank-num">49 | 76</span></div><div class="cell-pct"><span class="pct-bad">后36%</span></div></td>
+    </tr>
+    <tr class="row-even">
+        <td>23</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/518880.html" target="_blank">518880</a> <span class="fname">华安黄金ETF</span><span class="fsuffix"></span></td>
+        <td><span class="tag tag-etf">场内ETF</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="dn">-0.01%</span></div></td>
+        <td><div class="cell-ret"><span class="dn">-1.08%</span></div><div class="cell-rank"><span class="rank-num">17 | 62</span></div><div class="cell-pct"><span class="pct-mid">前27%</span></div></td>
+        <td><div class="cell-ret"><span class="dn">-3.92%</span></div><div class="cell-rank"><span class="rank-num">21 | 62</span></div><div class="cell-pct"><span class="pct-mid">前34%</span></div></td>
+        <td><div class="cell-ret"><span class="dn">-15.37%</span></div><div class="cell-rank"><span class="rank-num">32 | 62</span></div><div class="cell-pct"><span class="pct-bad">后48%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+1.55%</span></div><div class="cell-rank"><span class="rank-num">30 | 62</span></div><div class="cell-pct"><span class="pct-mid">前48%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+23.94%</span></div><div class="cell-rank"><span class="rank-num">15 | 62</span></div><div class="cell-pct"><span class="pct-good">前24%</span></div></td>
+        <td><div class="cell-ret"><span class="dn">-0.32%</span></div><div class="cell-rank"><span class="rank-num">31 | 62</span></div><div class="cell-pct"><span class="pct-mid">前50%</span></div></td>
+    </tr>
+    <tr class="row-odd">
+        <td>24</td>
+        <td class="col-fund"><a href="https://fund.eastmoney.com/008763.html" target="_blank">008763</a> <span class="fname">天弘越南市场股票发起式</span><span class="fsuffix">(QDII)A</span></td>
+        <td><span class="tag tag-limit">限大额100元/日</span></td>
+        <td class="col-today"><div class="cell-ret"><span class="up">+0.44%</span></div></td>
+        <td><div class="cell-ret"><span class="dn">-0.79%</span></div><div class="cell-rank"><span class="rank-num">71 | 84</span></div><div class="cell-pct"><span class="pct-bad">后15%</span></div></td>
+        <td><div class="cell-ret"><span class="dn">-2.30%</span></div><div class="cell-rank"><span class="rank-num">71 | 85</span></div><div class="cell-pct"><span class="pct-bad">后16%</span></div></td>
+        <td><div class="cell-ret"><span class="dn">-2.69%</span></div><div class="cell-rank"><span class="rank-num">68 | 78</span></div><div class="cell-pct"><span class="pct-bad">后13%</span></div></td>
+        <td><div class="cell-ret"><span class="dn">-6.32%</span></div><div class="cell-rank"><span class="rank-num">65 | 76</span></div><div class="cell-pct"><span class="pct-bad">后14%</span></div></td>
+        <td><div class="cell-ret"><span class="up">+17.06%</span></div><div class="cell-rank"><span class="rank-num">55 | 74</span></div><div class="cell-pct"><span class="pct-bad">后26%</span></div></td>
+        <td><div class="cell-ret"><span class="dn">-6.59%</span></div><div class="cell-rank"><span class="rank-num">66 | 76</span></div><div class="cell-pct"><span class="pct-bad">后13%</span></div></td>
+    </tr>
+
+    </tbody>
+  </table>
+  </div>
+
+</div>
+
+<div class="page-footer">
+  QDII海外基金收益排行 · 数据来源：天天基金 · 排名来源：天天基金同类排名 · 涨跌颜色：中国A股惯例（涨红跌绿）
+</div>
+
+</body>
+</html>

@@ -1,0 +1,107 @@
+[
+  {
+    "code": "TSM",
+    "name": "台积电",
+    "count": 5
+  },
+  {
+    "code": "NVDA",
+    "name": "英伟达",
+    "count": 4
+  },
+  {
+    "code": "LITE",
+    "name": "Lumentum Holdings Inc",
+    "count": 4
+  },
+  {
+    "code": "GLW",
+    "name": "康宁",
+    "count": 4
+  },
+  {
+    "code": "TSEM",
+    "name": "Tower半导体",
+    "count": 3
+  },
+  {
+    "code": "AVGO",
+    "name": "博通",
+    "count": 2
+  },
+  {
+    "code": "COHR",
+    "name": "Coherent Corp",
+    "count": 2
+  },
+  {
+    "code": "SNDK",
+    "name": "闪迪",
+    "count": 2
+  },
+  {
+    "code": "MU",
+    "name": "美光科技",
+    "count": 2
+  },
+  {
+    "code": "GOOGL",
+    "name": "谷歌-A",
+    "count": 2
+  },
+  {
+    "code": "INTC",
+    "name": "英特尔",
+    "count": 2
+  },
+  {
+    "code": "ONTO",
+    "name": "Onto Innovation Inc",
+    "count": 1
+  },
+  {
+    "code": "AAOI",
+    "name": "应用光电",
+    "count": 1
+  },
+  {
+    "code": "WDC",
+    "name": "西部数据",
+    "count": 1
+  },
+  {
+    "code": "MPWR",
+    "name": "Monolithic Power Systems Inc",
+    "count": 1
+  },
+  {
+    "code": "JOYY",
+    "name": "欢聚",
+    "count": 1
+  },
+  {
+    "code": "LRCX",
+    "name": "拉姆研究",
+    "count": 1
+  },
+  {
+    "code": "GOOG",
+    "name": "谷歌-C",
+    "count": 1
+  },
+  {
+    "code": "MKSI",
+    "name": "MKS Inc",
+    "count": 1
+  },
+  {
+    "code": "TTMI",
+    "name": "TTM科技",
+    "count": 1
+  },
+  {
+    "code": "AXTI",
+    "name": "AXT Inc",
+    "count": 1
+  }
+]

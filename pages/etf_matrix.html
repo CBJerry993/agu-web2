@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETF/指数 均线多空矩阵 · 实时扫描</title>
+  <link rel="stylesheet" href="../assets/site.css">
+<style>
+  body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #1a2035; font-size: 12px; min-height: 100vh; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  .main { padding: 0 16px 24px; max-width: 1400px; margin: 0 auto; }
+
+  /* header 与下方内容同宽 */
+  .report-shell { max-width: 1400px; margin: 0 auto; padding-left: 0; padding-right: 0; }
+  .report-heading { margin-left: 16px; margin-right: 16px; }
+
+  .stats-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stat-card { background: white; border-radius: 10px; padding: 12px 18px; flex: 1; min-width: 130px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); border-top: 3px solid; text-align: center; }
+  .stat-card .val { font-size: 24px; font-weight: 700; line-height: 1.2; }
+  .stat-card .lbl { font-size: 11px; margin-top: 3px; }
+  .stat-card.red    { border-color: #c0392b; }
+  .stat-card.red .val, .stat-card.red .lbl { color: #c0392b; }
+  .stat-card.green  { border-color: #27ae60; }
+  .stat-card.green .val, .stat-card.green .lbl { color: #27ae60; }
+  .stat-card.blue   { border-color: #1a5fac; }
+  .stat-card.blue .val, .stat-card.blue .lbl { color: #1a5fac; }
+
+  .cols { display: flex; gap: 12px; }
+  .col { flex: 1; background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); overflow: hidden; }
+  .col-hd { padding: 14px 18px 10px; font-size: 16px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; border-left: 5px solid; }
+  .col-hd.bull { border-left-color: #c0392b; color: #c0392b; }
+  .col-hd.bear { border-left-color: #27ae60; color: #27ae60; }
+  .col-hd .cnt { font-size: 12px; font-weight: 600; margin-left: auto; background: #f0f3f8; padding: 2px 10px; border-radius: 12px; }
+
+  /* ETF 表 */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: linear-gradient(90deg, #0d2b6e, #1a5fac); color: white; }
+  thead th { padding: 9px 6px; font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; letter-spacing: 0.3px; border-right: 1px solid rgba(255,255,255,0.15); }
+  thead th:last-child { border-right: none; }
+  thead th:first-child { text-align: left; padding-left: 14px; }
+  tbody tr { border-bottom: 1px solid #f0f3f8; transition: all 0.2s ease; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f6f9ff !important; transform: translateX(6px); box-shadow: 0 2px 12px rgba(26,95,172,0.10); }
+  tbody tr:nth-child(even) { background: #fafbfe; }
+  tbody tr:nth-child(odd) { background: #fff; }
+  td { padding: 6px 6px; text-align: center; vertical-align: middle; border-right: 1px solid #f0f3f8; line-height: 1.5; }
+  td:last-child { border-right: none; }
+  td:first-child { text-align: left; padding-left: 14px; border-right: none; }
+
+  .rk { font-size: 12px; color: #999; width: 36px; }
+  .str { font-size: 14px; font-weight: 700; width: 72px; }
+  .str.up { color: #e63946; }
+  .str.dn { color: #2ba84a; }
+  .ma-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; min-width: 28px; }
+  .ma-badge.hi { background: #e8f5e9; color: #2e7d32; }
+  .ma-badge.mid { background: #fff3e0; color: #e65100; }
+  .ma-badge.lo { background: #f5f5f5; color: #888; }
+  .nm { font-weight: 600; color: #1a2035; font-size: 13px; }
+  .cd { color: #1a5fac; font-size: 13px; font-weight: 600; }
+  .cd a { color: #1a5fac; text-decoration: none; }
+  .cd a:hover { text-decoration: underline; }
+  .pr { font-size: 14px; font-weight: 600; }
+  .ch { font-weight: 700; font-size: 14px; }
+  .ch.up { color: #e63946; }
+  .ch.dn { color: #2ba84a; }
+
+  /* 指数区分隔 */
+  .idx-divider { position: relative; margin: 6px 14px 2px; height: 1px; background: #e0e5ec; }
+  .idx-divider span { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); background: white; padding: 0 12px; font-size: 11px; color: #8e9aaf; font-weight: 600; white-space: nowrap; }
+
+  /* 指数表头浅色 */
+  .idx-table thead tr { background: linear-gradient(90deg, #4a6fa5, #5b8cc9); }
+  .idx-table thead th { padding: 7px 8px; font-size: 11px; }
+  .idx-table td { padding: 5px 8px; }
+
+  /* 指数段统计 */
+  .idx-stats { display: flex; gap: 6px; padding: 6px 14px 8px; font-size: 11px; color: #888; justify-content: flex-end; }
+  .idx-stats span { background: #f6f8fb; border-radius: 4px; padding: 1px 6px; }
+
+  .page-footer { text-align: center; color: #aaa; font-size: 10px; padding: 16px; margin-top: 8px; }
+
+  @media (max-width: 1000px) { .cols { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../index.html" aria-label="基金观察台首页">
+        <span class="brand-mark">F</span>
+        <span>基金观察台</span>
+      </a>
+      <div class="nav-links" aria-label="主要分类">
+        <a href="../index.html">首页</a>
+        <a href="gs145.html">GS145</a>
+        <a href="qdii.html">QDII</a>
+        <a href="top100.html">Top100</a>
+        <a class="active" href="etf_matrix.html">ETF矩阵</a>
+        <a href="../index.html#reports">报告</a>
+        <a href="../index.html#disclaimer">免责</a>
+      </div>
+    </nav>
+  </header>
+
+<main class="report-shell">
+    <section class="report-heading">
+      <div>
+        <p class="eyebrow">ETF/Index Matrix</p>
+        <h1>📡 ETF/指数 均线多空矩阵</h1>
+        <p>全市场ETF + 核心指数均线排列扫描 · 数据来源：iQuant · MA5/10/20/60/120/250</p>
+        <p style="font-size:12px;color:var(--muted);margin-top:4px" id="hdrTime">--</p>
+      </div>
+    </section>
+
+<div class="main">
+  <div class="stats-row">
+    <div class="stat-card blue">
+      <div class="val" id="totalS">--</div>
+      <div class="lbl">扫描ETF总数</div>
+    </div>
+    <div class="stat-card red">
+      <div class="val" id="bullN">--</div>
+      <div class="lbl">🐂 ETF多头 （占比 <span id="bullP">--</span>）</div>
+    </div>
+    <div class="stat-card green">
+      <div class="val" id="bearN">--</div>
+      <div class="lbl">🐻 ETF空头 （占比 <span id="bearP">--</span>）</div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <!-- 多头列 -->
+    <div class="col">
+      <div class="col-hd bull">🐂 均线多头排列 <span class="cnt" id="bullCnt">--</span></div>
+      <div class="table-wrap">
+      <!-- ETF -->
+      <table>
+        <thead><tr><th>ETF名称</th><th>代码</th><th>价格</th><th>涨跌幅</th><th>强度</th><th>次数</th></tr></thead>
+        <tbody id="bullTb"></tbody>
+      </table>
+      <!-- 指数分隔线 -->
+      <div class="idx-divider"><span>📊 核心指数</span></div>
+      <!-- 指数表 -->
+      <table class="idx-table">
+        <thead><tr><th>指数名称</th><th>代码</th><th>涨跌幅</th><th>次数</th></tr></thead>
+        <tbody id="bullIdxTb"></tbody>
+      </table>
+      <div class="idx-stats"><span id="bullIdxCnt">--</span></div>
+      </div>
+    </div>
+    <!-- 空头列 -->
+    <div class="col">
+      <div class="col-hd bear">🐻 均线空头排列 <span class="cnt" id="bearCnt">--</span></div>
+      <div class="table-wrap">
+      <!-- ETF -->
+      <table>
+        <thead><tr><th>ETF名称</th><th>代码</th><th>价格</th><th>涨跌幅</th><th>强度</th><th>次数</th></tr></thead>
+        <tbody id="bearTb"></tbody>
+      </table>
+      <div class="idx-divider"><span>📊 核心指数</span></div>
+      <table class="idx-table">
+        <thead><tr><th>指数名称</th><th>代码</th><th>涨跌幅</th><th>次数</th></tr></thead>
+        <tbody id="bearIdxTb"></tbody>
+      </table>
+      <div class="idx-stats"><span id="bearIdxCnt">--</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+
+<div class="page-footer">
+  iQuant 实时扫描 · 每5分钟自动更新 &nbsp;|&nbsp; "次数"为满足 MA5≻10≻20≻60≻120≻250 的均线条数（最大6）
+</div>
+
+<script src="../data/etf_scan.js"></script>
+<script>function badgeCls(n) { if (n>=6) return 'hi'; if (n>=4) return 'mid'; return 'lo'; }
+
+function xqUrl(code) {
+  // ETF: 5/6 开头 SH，其余 SZ
+  if (code.startsWith('5')||code.startsWith('6')) return 'https://xueqiu.com/S/SH'+code;
+  return 'https://xueqiu.com/S/SZ'+code;
+}
+
+function idxXqUrl(code) {
+  // 指数: 纯数字6位→判断SH/SZ，非纯数字→直接拼接
+  if (/^\d{6}$/.test(code)) {
+    if (code.startsWith('0')||code.startsWith('5')||code.startsWith('6')) return 'https://xueqiu.com/S/SH'+code;
+    return 'https://xueqiu.com/S/SZ'+code;
+  }
+  return 'https://xueqiu.com/S/'+code;
+}
+
+function renderETF(tb, funds, isBull) {
+  if (!funds.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ccc;padding:24px">暂无数据</td></tr>'; return; }
+  tb.innerHTML = funds.map(f => {
+    var pr = typeof f.price==='number' ? f.price.toFixed(4) : f.price;
+    var xq = xqUrl(f.code);
+    return '<tr>'
+      + '<td class="nm">' + f.name + '</td>'
+      + '<td class="cd"><a href="' + xq + '" target="_blank" title="在雪球查看">' + f.code + '</a></td>'
+      + '<td class="pr">' + pr + '</td>'
+      + '<td class="ch ' + (f.change.startsWith('+')?'up':'dn') + '">' + f.change + '</td>'
+      + '<td class="str ' + (isBull?'up':'dn') + '">' + f.strength + '</td>'
+      + '<td><span class="ma-badge '+badgeCls(f.maCount)+'">' + f.maCount + '</span></td>'
+      + '</tr>';
+  }).join('');
+}
+
+function renderIndex(tb, indices) {
+  if (!indices.length) { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ccc;padding:16px">暂无数据</td></tr>'; return; }
+  tb.innerHTML = indices.map(f => {
+    var xq = idxXqUrl(f.code);
+    return '<tr>'
+      + '<td class="nm">' + f.name + '</td>'
+      + '<td class="cd"><a href="' + xq + '" target="_blank" title="在雪球查看">' + f.code + '</a></td>'
+      + '<td class="ch ' + (f.change.startsWith('+')?'up':'dn') + '">' + f.change + '</td>'
+      + '<td><span class="ma-badge '+badgeCls(f.maCount)+'">' + f.maCount + '</span></td>'
+      + '</tr>';
+  }).join('');
+}
+
+(function() {
+  var d = ETF_MATRIX_DATA;
+  document.getElementById('hdrTime').textContent = '数据更新：' + d.updateTime + ' · 下次扫描：' + d.nextScan;
+  document.getElementById('totalS').textContent = d.summary.totalScanned;
+  document.getElementById('bullN').textContent = d.summary.bullCount;
+  document.getElementById('bullP').textContent = d.summary.bullPct;
+  document.getElementById('bearN').textContent = d.summary.bearCount;
+  document.getElementById('bearP').textContent = d.summary.bearPct;
+  document.getElementById('bullCnt').textContent = 'ETF ' + d.summary.bullCount + ' · 指数 ' + (d.bullIndices ? d.bullIndices.length : 0);
+  document.getElementById('bearCnt').textContent = 'ETF ' + d.summary.bearCount + ' · 指数 ' + (d.bearIndices ? d.bearIndices.length : 0);
+
+  renderETF(document.getElementById('bullTb'), d.bullETFs, true);
+  renderETF(document.getElementById('bearTb'), d.bearETFs, false);
+
+  var bullIdx = d.bullIndices || [];
+  var bearIdx = d.bearIndices || [];
+  renderIndex(document.getElementById('bullIdxTb'), bullIdx);
+  renderIndex(document.getElementById('bearIdxTb'), bearIdx);
+  document.getElementById('bullIdxCnt').textContent = '指数多头 ' + bullIdx.length + ' 个';
+  document.getElementById('bearIdxCnt').textContent = '指数空头 ' + bearIdx.length + ' 个';
+})();
+</script>
+</body>
+</html>
