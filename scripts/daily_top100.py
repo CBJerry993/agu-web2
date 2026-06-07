@@ -2,11 +2,14 @@
 Top100日更脚本 - 一键生成最新报告
 步骤: 拉基金列表 → 拉排名 → 拉持仓(仅季度) → 生成HTML → 检查完整性
 """
+from pathlib import Path
 import requests, re, json, time, datetime, sys
 
 today = datetime.date.today().strftime('%Y-%m-%d')
-DATA_DIR = 'D:/1.work/project/agu-web2/scripts'
-OUTPUT = 'D:/1.work/project/agu-web2/reports/top_100.html'
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / 'scripts'
+OUTPUT = ROOT / 'reports' / 'top_100.html'
+PAGE_OUTPUT = ROOT / 'pages' / 'top100.html'
 H = {'User-Agent': 'Mozilla/5.0 Chrome/120', 'Referer': 'https://fund.eastmoney.com/data/fundranking.html'}
 API = 'https://fund.eastmoney.com/data/rankhandler.aspx'
 
@@ -246,10 +249,16 @@ html = f'''<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta n
 <div class="pf">数据来源：东方财富天天基金 &nbsp;|&nbsp; 红涨绿跌(A股惯例) &nbsp;|&nbsp; 按今年来降序排列 &nbsp;|&nbsp; AI生成仅供参考 &nbsp;|&nbsp; {today}</div>
 </body></html>'''
 
+OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 with open(OUTPUT, 'w', encoding='utf-8') as f:
     f.write(html)
 
+PAGE_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+with open(PAGE_OUTPUT, 'w', encoding='utf-8') as f:
+    f.write(html)
+
 print(f'Done! {OUTPUT}')
+print(f'Done! {PAGE_OUTPUT}')
 print(f'Classification: 夯{len(cats["夯"])} 顶{len(cats["顶"])} 人上人{len(cats["人上人"])} 拉{len(cats["拉"])} NPC{len(cats["NPC"])}')
 print(f'Coverage: {" ".join(f"{p}{len(rd.get(p,{}))}" for p in ["w1","m1","m3","m6","ytd","y1","y2"])}')
 if missing:
