@@ -243,19 +243,65 @@ note = ''
 if missing:
     note = f'<div class="nb">⚠️ {len(missing)}项排名缺失(有收益无排名)，主要是近1年/近2年新基金成立时间不足。具体: {json.dumps(missing[:5], ensure_ascii=False)}...</div>'
 
-html = f'''<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Top100 基金排行 · {today}</title><style>{css}</style></head><body>
+report_html = f'''<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Top100 基金排行 · {today}</title><style>{css}</style></head><body>
 <div class="ph"><h1>🏆 全市场Top100基金收益排行</h1><div class="sub">今年以来收益率排名 · 夯/顶/人上人/拉/NPC五级分类 · 涨幅 & 同类排名</div><div class="ut">净值更新：{today} &nbsp;|&nbsp; 数据来源：东方财富天天基金 &nbsp;|&nbsp; 生成于 {today}</div></div>
 <div class="main"><div class="sr">{stats}</div>{note}{"".join(secs)}</div>
 <div class="pf">数据来源：东方财富天天基金 &nbsp;|&nbsp; 红涨绿跌(A股惯例) &nbsp;|&nbsp; 按今年来降序排列 &nbsp;|&nbsp; AI生成仅供参考 &nbsp;|&nbsp; {today}</div>
 </body></html>'''
 
+page_html = f'''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top100基金收益排行 - 基金观察台</title>
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav">
+      <a class="brand" href="../index.html" aria-label="基金观察台首页">
+        <span class="brand-mark">F</span>
+        <span>基金观察台</span>
+      </a>
+      <div class="nav-links" aria-label="主要分类">
+        <a href="../index.html">首页</a>
+        <a href="gs145.html">GS145</a>
+        <a href="qdii.html">QDII</a>
+        <a class="active" href="top100.html">Top100</a>
+        <a href="etf_matrix.html">ETF矩阵</a>
+        <a href="../index.html#reports">报告</a>
+        <a href="../index.html#disclaimer">免责</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="report-shell">
+    <section class="report-heading">
+      <div>
+        <p class="eyebrow">Top100 Report</p>
+        <h1>全市场Top100基金收益排行</h1>
+        <p>今年以来收益率排名 · 夯/顶/人上人/拉/NPC五级分类 · 涨幅 &amp; 同类排名</p>
+        <p style="font-size:12px;color:var(--muted);margin-top:4px">净值更新：{today} &nbsp;|&nbsp; 数据来源：东方财富天天基金 &nbsp;|&nbsp; 生成于 {today}</p>
+      </div>
+      <a class="button subtle" href="../reports/top_100.html" target="_blank" rel="noopener">单独打开报告</a>
+    </section>
+
+    <section class="report-frame-wrap" aria-label="Top100基金收益排行内容">
+      <iframe class="report-frame" src="../reports/top_100.html" title="Top100基金收益排行"></iframe>
+    </section>
+  </main>
+</body>
+</html>
+'''
+
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 with open(OUTPUT, 'w', encoding='utf-8') as f:
-    f.write(html)
+    f.write(report_html)
 
 PAGE_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 with open(PAGE_OUTPUT, 'w', encoding='utf-8') as f:
-    f.write(html)
+    f.write(page_html)
 
 print(f'Done! {OUTPUT}')
 print(f'Done! {PAGE_OUTPUT}')
