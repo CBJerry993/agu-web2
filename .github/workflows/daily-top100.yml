@@ -2,7 +2,8 @@ name: Daily Top100 Update
 
 on:
   schedule:
-    - cron: "30 8 * * 1-5"
+    # Runs daily at 00:00 Asia/Shanghai (16:00 UTC).
+    - cron: "0 16 * * *"
   workflow_dispatch:
 
 permissions:
