@@ -27,6 +27,31 @@ $files = @(
 
 Write-Log "Starting reports data publish"
 
+$pythonCandidates = @(
+  "C:\Users\R7000P\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe",
+  "python",
+  "py"
+)
+$python = $null
+foreach ($candidate in $pythonCandidates) {
+  try {
+    $resolved = Get-Command $candidate -ErrorAction Stop
+    $python = $resolved.Source
+    break
+  } catch {
+  }
+}
+if (-not $python) {
+  throw "Python not found. Cannot update report data."
+}
+
+Write-Log "Updating report JSON via $python"
+$env:TTFUND_APIKEY = [Environment]::GetEnvironmentVariable("TTFUND_APIKEY", "User")
+& $python (Join-Path $repo "scripts\update_report_data.py") 2>&1 | Tee-Object -FilePath $logPath -Append
+if ($LASTEXITCODE -ne 0) {
+  throw "Report JSON update failed with exit code $LASTEXITCODE"
+}
+
 git add -- $files
 
 git diff --cached --quiet -- $files
