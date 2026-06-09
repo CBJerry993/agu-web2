@@ -14,6 +14,7 @@ import datetime as _dt
 import json
 import os
 import re
+import sys
 import time
 import urllib.parse
 import urllib.request
@@ -347,13 +348,98 @@ def fetch_ttfund_dataset(target_codes: set[str], top_n: int | None = None) -> tu
     return funds, ranks
 
 
+def fill_w1_ranks_from_eastmoney(
+    funds: list[dict],
+    ranks: dict[str, dict[str, dict]],
+    type_by_code: dict[str, str] | None = None,
+) -> None:
+    target_codes = {fund["code"] for fund in funds if fund["code"] not in ranks.get("w1", {})}
+    if not target_codes:
+        return
+
+    try:
+        rows, total = fetch_page("all", "zzf", 1, 20000)
+    except Exception as exc:
+        print(f"[WARN] w1/all: {exc}")
+        rows, total = [], 0
+
+    for idx, row in enumerate(rows):
+        if len(row) < 15:
+            continue
+        code = row[0]
+        if code not in target_codes:
+            continue
+        ranks.setdefault("w1", {})[code] = {
+            "rank": idx + 1,
+            "total": total or len(rows),
+            "type": "全部",
+        }
+        target_codes.discard(code)
+
+    if not target_codes:
+        return
+
+    inferred_type_by_code = {fund["code"]: fund.get("type", "") for fund in funds}
+    if type_by_code:
+        inferred_type_by_code.update(type_by_code)
+
+    ft_targets: dict[str, set[str]] = defaultdict(set)
+    for code in target_codes:
+        ft_targets[type_to_ft(inferred_type_by_code.get(code))].add(code)
+
+    scan_plan = [(ft, label, ft_targets[ft]) for ft, label in FUND_TYPES if ft in ft_targets]
+    if not scan_plan:
+        scan_plan = [(ft, label, set(target_codes)) for ft, label in FUND_TYPES]
+
+    for ft, type_label, wanted in scan_plan:
+        remaining = set(wanted)
+        if not remaining:
+            continue
+
+        page = 1
+        while True:
+            try:
+                rows, total = fetch_page(ft, "zzf", page)
+            except Exception as exc:
+                print(f"[WARN] w1/{ft}/p{page}: {exc}")
+                break
+
+            if not rows:
+                break
+
+            for idx, row in enumerate(rows):
+                if len(row) < 15:
+                    continue
+                code = row[0]
+                if code not in remaining:
+                    continue
+
+                ranks.setdefault("w1", {})[code] = {
+                    "rank": (page - 1) * 200 + idx + 1,
+                    "total": total,
+                    "type": type_label,
+                }
+                remaining.discard(code)
+
+            if not remaining:
+                break
+            if total <= page * 200:
+                break
+            if page >= 60:
+                break
+            page += 1
+            time.sleep(0.03)
+
+
 def fetch_latest_fund_dataset(
     target_codes: set[str],
     top_n: int | None = None,
     type_by_code: dict[str, str] | None = None,
 ) -> tuple[list[dict], dict]:
     try:
-        return fetch_ttfund_dataset(target_codes, top_n=top_n)
+        funds, ranks = fetch_ttfund_dataset(target_codes, top_n=top_n)
+        fill_w1_ranks_from_eastmoney(funds, ranks, type_by_code=type_by_code)
+        return funds, ranks
     except Exception as exc:
         print(f"[WARN] TTFUND API unavailable, falling back to Eastmoney: {exc}")
         return fetch_fund_dataset(target_codes, top_n=top_n, type_by_code=type_by_code)
@@ -641,9 +727,13 @@ def update_qdii() -> None:
 
 
 def main() -> None:
-    update_gs145()
-    update_qdii()
-    update_top100()
+    targets = set(sys.argv[1:] or ["gs145", "qdii", "top100"])
+    if "gs145" in targets:
+        update_gs145()
+    if "qdii" in targets:
+        update_qdii()
+    if "top100" in targets:
+        update_top100()
 
 
 if __name__ == "__main__":
