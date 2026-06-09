@@ -4,7 +4,7 @@ $repo = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $repo
 
 $logDir = Join-Path $repo ".workbuddy"
-$logPath = Join-Path $logDir "publish_gs_qdii.log"
+$logPath = Join-Path $logDir "publish_reports_data.log"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
 function Write-Log {
@@ -16,23 +16,28 @@ function Write-Log {
 $files = @(
   "pages/gs145.html",
   "pages/qdii.html",
+  "pages/top100.html",
   "reports/gs_145fund_report.html",
-  "reports/qdii_fund_report.html"
+  "reports/qdii_fund_report.html",
+  "reports/top_100.html",
+  "reports/gs145_data.json",
+  "reports/qdii_data.json",
+  "reports/top100_data.json"
 )
 
-Write-Log "Starting GS145/QDII publish"
+Write-Log "Starting reports data publish"
 
 git add -- $files
 
 git diff --cached --quiet -- $files
 if ($LASTEXITCODE -eq 0) {
-  Write-Log "No GS145/QDII changes to publish"
+  Write-Log "No report data changes to publish"
   exit 0
 }
 
 $date = Get-Date -Format "yyyy-MM-dd"
-git commit -m "Update GS145 and QDII reports $date"
+git commit -m "Update report data $date"
 git pull --rebase --autostash origin main
 git push
 
-Write-Log "Published GS145/QDII changes"
+Write-Log "Published report data changes"

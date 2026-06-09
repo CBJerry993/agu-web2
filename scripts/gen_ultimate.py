@@ -1,12 +1,13 @@
 """
 终极版: GS145完整CSS + 真实排名 + 更新持仓
+模板+数据分离：只输出 top100_data.json，HTML模板通过JS加载渲染
 """
 import json, datetime, re
 from collections import defaultdict
 
 EM_RANKED = 'D:/1.work/project/agu-web2/scripts/em_top100_ranked.json'
 HOLDINGS_PATH = 'D:/1.work/project/agu-web2/scripts/holdings_top100.json'
-OUTPUT = 'D:/1.work/project/agu-web2/reports/top_100.html'
+OUTPUT_JSON = 'D:/1.work/project/agu-web2/reports/top100_data.json'
 today = datetime.date.today().strftime('%Y-%m-%d')
 
 with open(EM_RANKED, 'r', encoding='utf-8') as f:
@@ -234,9 +235,9 @@ for board, title, color, icon in board_configs:
 </div>''')
 
 # ==================== STATS ====================
-stats = f'''
+stats_html = f'''
     <div class="stat-card blue">
-      <div class="val">100</div><div class="lbl">基金总数</div>
+      <div class="val">{len(funds)}</div><div class="lbl">基金总数</div>
     </div>
     <div class="stat-card red">
       <div class="val">{len(cats["夯"])}</div><div class="lbl">夯 · 顶尖</div>
@@ -260,228 +261,27 @@ for p in periods:
     c = len(rank_data[p])
     l = period_labels[periods.index(p)]
     coverage_parts.append(f'{l}{c}/100')
-note = ''
 
-# ==================== FINAL HTML ====================
-html = f'''<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>全市场Top100基金收益排行 · {today}</title>
-<style>
-  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-  body {{ font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f3f8; color: #1a2035; font-size: 12px; }}
+sections_html = ''.join(secs)
+holdings_html = ''.join(hold_secs)
 
-  .page-header {{
-    background: linear-gradient(135deg, #0d2b6e 0%, #1a5fac 50%, #0d8fd9 100%);
-    color: white; padding: 22px 28px 18px; position: relative; overflow: hidden;
-  }}
-  .page-header::after {{ content: ''; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.06); }}
-  .page-header h1 {{ font-size: 20px; font-weight: 700; letter-spacing: 1px; }}
-  .page-header .subtitle {{ font-size: 14px; opacity: 0.85; margin-top: 6px; }}
-  .page-header .update-time {{ font-size: 13px; opacity: 0.7; margin-top: 3px; text-align: right; }}
+# ==================== OUTPUT JSON ====================
+import os
+output_data = {
+    "updateDate": today,
+    "generateDate": today,
+    "fundCount": len(funds),
+    "statsHtml": stats_html,
+    "sectionsHtml": sections_html,
+    "holdingsHtml": holdings_html,
+}
 
-  .main {{ padding: 16px; max-width: 1200px; margin: 0 auto; }}
+os.makedirs(os.path.dirname(OUTPUT_JSON), exist_ok=True)
+with open(OUTPUT_JSON, 'w', encoding='utf-8') as f:
+    json.dump(output_data, f, ensure_ascii=False, indent=2)
 
-  .stats-row {{ display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }}
-  .stat-card {{ background: white; border-radius: 10px; padding: 12px 16px; flex: 1; min-width: 120px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); border-top: 3px solid; text-align: center; }}
-  .stat-card .val {{ font-size: 22px; font-weight: 700; line-height: 1.2; }}
-  .stat-card .lbl {{ font-size: 11px; margin-top: 3px; }}
-  .stat-card.red    {{ border-color: #c0392b; }}
-  .stat-card.red .val,    .stat-card.red .lbl    {{ color: #c0392b; }}
-  .stat-card.orange {{ border-color: #e67e22; }}
-  .stat-card.orange .val, .stat-card.orange .lbl {{ color: #e67e22; }}
-  .stat-card.green  {{ border-color: #27ae60; }}
-  .stat-card.green .val,  .stat-card.green .lbl  {{ color: #27ae60; }}
-  .stat-card.purple {{ border-color: #8e44ad; }}
-  .stat-card.purple .val, .stat-card.purple .lbl {{ color: #8e44ad; }}
-  .stat-card.gray   {{ border-color: #888; }}
-  .stat-card.gray .val,   .stat-card.gray .lbl   {{ color: #888; }}
-  .stat-card.blue   {{ border-color: #1a5fac; }}
-  .stat-card.blue .val,   .stat-card.blue .lbl   {{ color: #1a5fac; }}
-
-  .section-title {{
-    display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px;
-    margin: 24px 0 14px;
-    font-size: 20px; font-weight: 800; color: #0d2b6e;
-    letter-spacing: 2px;
-    border-left: 5px solid;
-    padding: 4px 12px;
-    background: white;
-    border-radius: 6px;
-  }}
-  .section-title .badge {{ font-size: 12px; padding: 3px 12px; border-radius: 20px; font-weight: 600; margin-left: 10px; letter-spacing: 0.5px; }}
-
-  .table-wrap {{ overflow-x: auto; }}
-
-  .fund-table {{ width: 100%; min-width: 980px; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.07); font-size: 13px; table-layout: fixed; }}
-  .fund-table thead tr {{ background: linear-gradient(90deg, #0d2b6e, #1a5fac); color: white; }}
-  .fund-table thead th {{ padding: 9px 5px; font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; letter-spacing: 0.3px; border-right: 1px solid rgba(255,255,255,0.15); }}
-  .fund-table thead th:last-child {{ border-right: none; }}
-  .fund-table thead th.sort-col {{ background: rgba(255,255,255,0.2); text-shadow: 0 0 8px rgba(255,255,255,0.5); font-size: 12px; border-bottom: 3px solid #f9e79f; }}
-  .fund-table thead th:first-child {{ width: 31%; text-align: left; padding-left: 12px; }}
-  .fund-table tbody tr {{ border-bottom: 1px solid #f0f3f8; transition: background 0.15s; }}
-  .fund-table tbody tr:last-child {{ border-bottom: none; }}
-  .fund-table tbody tr:hover {{ background: #f6f9ff !important; transform: translateX(6px); box-shadow: 0 2px 12px rgba(26,95,172,0.10); transition: all 0.2s ease; }}
-  .fund-table tbody tr {{ transition: all 0.2s ease; }}
-  .fund-table tbody tr.row-even {{ background: #fafbfe; }}
-  .fund-table tbody tr.row-odd {{ background: #fff; }}
-  .fund-table td {{ padding: 5px 4px; text-align: center; vertical-align: middle; border-right: 1px solid #f0f3f8; line-height: 1.5; }}
-  .fund-table th:nth-child(n+2), .fund-table td:nth-child(n+2) {{ width: 9.85%; }}
-  .fund-table td:last-child {{ border-right: none; }}
-  .fund-table td:first-child {{ width: 31%; text-align: left; padding-left: 14px; border-right: none; }}
-
-  .col-fund {{ font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }}
-  .col-fund a {{ font-weight: 700; margin-right: 4px; color: #1a5fac; font-size: 13px; text-decoration: none; line-height: 1.35; }}
-  .col-fund .fname {{ color: #1a2035; font-weight: 600; }}
-
-  .cell-ret {{ font-size: 15px; font-weight: 700; }}
-  .cell-rank {{ font-size: 12px; color: #666; margin-top: 2px; }}
-  .cell-pct {{ font-size: 12px; margin-top: 2px; }}
-
-  .up {{ color: #e63946; }}
-  .dn {{ color: #2ba84a; }}
-  .neutral {{ color: #888; font-weight: 600; }}
-  .na {{ color: #ccc; font-size: 10px; }}
-
-  .pct-top  {{ color: #c0392b; font-weight: 700; }}
-  .pct-good {{ color: #d94f3a; background: #fdecea; padding: 0 2px; border-radius: 2px; }}
-  .pct-mid  {{ color: #2e7d32; background: #e8f5e9; padding: 0 2px; border-radius: 2px; }}
-  .pct-bad  {{ color: #1a7a3c; font-weight: 700; }}
-
-  .rank-num {{ color: #555; font-family: monospace; font-size: 12px; }}
-
-  .note-bar {{
-    display: flex; gap: 12px; flex-wrap: wrap;
-    padding: 8px 16px; font-size: 11px; color: #888;
-    background: #fafbfe; border-top: 1px solid #f0f3f8; border-radius: 0 0 8px 8px;
-  }}
-
-  /* Holdings section - redesigned */
-  .holdings-section {{
-    margin-bottom: 28px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
-    overflow: hidden;
-  }}
-  .holdings-header {{
-    display: flex; align-items: center;
-    padding: 14px 20px;
-    background: linear-gradient(135deg, #f8f9fc, #fff);
-    border-bottom: 1px solid #f0f3f8;
-    gap: 10px;
-  }}
-  .holdings-icon {{ font-size: 22px; }}
-  .holdings-title {{
-    font-size: 17px; font-weight: 800; color: #1a2035;
-    letter-spacing: 0.5px;
-  }}
-  .holdings-badge {{
-    font-size: 11px; padding: 3px 10px; border-radius: 12px;
-    font-weight: 600; margin-left: auto;
-  }}
-
-  .holdings-table {{
-    width: 100%; border-collapse: collapse;
-    font-size: 13px; table-layout: auto;
-  }}
-  .holdings-table thead tr {{
-    background: linear-gradient(90deg, #1a2035, #2c3e50);
-    color: white;
-  }}
-  .holdings-table thead th {{
-    padding: 10px 12px; font-size: 11px; font-weight: 600;
-    text-align: left; letter-spacing: 0.5px;
-  }}
-  .holdings-table thead th:first-child {{ width: 80px; }}
-  .holdings-table thead th:nth-child(2) {{ width: 100px; }}
-  .holdings-table thead th:nth-child(3) {{ width: 170px; }}
-  .holdings-table tbody tr {{
-    border-bottom: 1px solid #f0f3f8;
-    transition: all 0.2s ease;
-  }}
-  .holdings-table tbody tr:last-child {{ border-bottom: none; }}
-  .holdings-table tbody tr:hover {{
-    background: linear-gradient(90deg, #f6f9ff, #fafbfe);
-    transform: translateX(8px);
-    box-shadow: 0 2px 12px rgba(26,95,172,0.10);
-  }}
-  .holdings-table td {{
-    padding: 10px 12px; vertical-align: middle;
-  }}
-  .stock-code {{
-    font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
-    font-weight: 700; color: #1a5fac; font-size: 13px;
-  }}
-  .stock-name {{ font-weight: 600; color: #1a2035; font-size: 13px; }}
-  
-  .stock-freq {{ 
-    display: flex; align-items: center; gap: 10px;
-  }}
-  .freq-bar-wrap {{
-    flex: 1; height: 16px; background: #f0f3f8;
-    border-radius: 8px; overflow: hidden;
-    max-width: 100px;
-  }}
-  .freq-bar-fill {{
-    height: 100%; border-radius: 8px;
-    transition: width 0.4s ease;
-    min-width: 4px;
-  }}
-  .freq-num {{
-    font-weight: 700; font-size: 13px; color: #1a2035;
-    white-space: nowrap;
-  }}
-  
-  .stock-desc {{
-    font-size: 12px; color: #5a6a85; line-height: 1.55;
-    padding-right: 8px;
-  }}
-  .stock-desc.no-desc {{
-    color: #ccc; font-style: italic; font-size: 11px;
-  }}
-
-  .page-footer {{ text-align: center; color: #aaa; font-size: 10px; padding: 16px; margin-top: 8px; }}
-
-  .holdings-section .table-wrap {{ overflow-x: visible; }}
-
-  @media (max-width: 1100px) {{ .fund-table {{ font-size: 11px; }} .col-fund, .col-fund a, .col-fund .fname {{ font-size: 11px; }} .cell-ret {{ font-size: 12px; }} }}
-</style>
-</head>
-<body>
-
-<div class="page-header">
-  <h1>🏆 全市场Top100基金收益排行</h1>
-  <div class="subtitle">今年以来收益率排名 · 全市场基金Top100 · 夯/顶/人上人/拉/NPC五级分类 · 涨幅 &amp; 同类排名</div>
-  <div class="update-time">净值更新：{today} &nbsp;|&nbsp; 数据来源：东方财富天天基金 &nbsp;|&nbsp; 生成于 {today}</div>
-</div>
-
-<div class="main">
-
-  <div class="stats-row">{stats}</div>
-
-{note}
-
-{''.join(secs)}
-
-{''.join(hold_secs)}
-
-</div>
-
-<div class="page-footer">
-  数据来源：东方财富天天基金 &nbsp;|&nbsp; 涨幅颜色：红涨绿跌（中国A股惯例）&nbsp;|&nbsp;
-  各分类内按今年来收益率降序排列 &nbsp;|&nbsp; 持仓数据截至2026Q1季报 &nbsp;|&nbsp; 报告由AI自动生成，仅供参考 &nbsp;|&nbsp; {today}
-</div>
-
-</body>
-</html>'''
-
-with open(OUTPUT, 'w', encoding='utf-8') as f:
-    f.write(html)
-
-print(f"Generated: {OUTPUT}")
+print(f"JSON已生成: {OUTPUT_JSON}")
 for cat in ['夯','顶','人上人','拉','NPC']:
     print(f"  {cat}: {len(cats[cat])}")
 print(f"\nHoldings: 主板{len(holdings.get('主板',[]))} 创业板{len(holdings.get('创业板',[]))} 科创板{len(holdings.get('科创板',[]))} 美股{len(holdings.get('美股',[]))}")
+

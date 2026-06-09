@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GS145基金分类报告 - 基金观察台</title>
   <link rel="stylesheet" href="../assets/site.css">
+  <style>
+    .report-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .report-toolbar a {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .report-toolbar a:hover {
+      color: var(--blue);
+    }
+    .report-frame-wrap {
+      height: calc(100vh - 120px);
+      min-height: 720px;
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -26,16 +45,9 @@
   </header>
 
   <main class="report-shell">
-    <section class="report-heading">
-      <div>
-        <p class="eyebrow">GS145 Report</p>
-        <h1>GS145基金分类报告</h1>
-        <p>国信145只重点基金 · 夯/顶/人上人/拉/NPC五级分类 · 涨幅 &amp; 同类排名</p>
-        <p style="font-size:12px;color:var(--muted);margin-top:4px">净值更新：2026-06-05 &nbsp;|&nbsp; 数据来源：天天基金 &nbsp;|&nbsp; 生成于 2026-06-05</p>
-      </div>
-      <a class="button subtle" href="../reports/gs_145fund_report.html" target="_blank" rel="noopener">单独打开报告</a>
-    </section>
-
+    <div class="report-toolbar">
+      <a href="../reports/gs_145fund_report.html" target="_blank" rel="noopener">单独打开报告 →</a>
+    </div>
     <section class="report-frame-wrap" aria-label="GS145基金分类报告内容">
       <iframe class="report-frame" src="../reports/gs_145fund_report.html" title="GS145基金分类报告"></iframe>
     </section>
