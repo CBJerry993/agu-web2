@@ -55,6 +55,7 @@
   .fund-table thead tr { background: linear-gradient(90deg, #0d2b6e, #1a5fac); color: white; }
   .fund-table thead th { padding: 9px 5px; font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; letter-spacing: 0.3px; border-right: 1px solid rgba(255,255,255,0.15); }
   .fund-table thead th:last-child { border-right: none; }
+  .fund-table thead th:nth-child(4) { display: none; }
   .fund-table thead th:first-child { text-align: center; padding: 9px 2px; min-width: 32px; }
   .fund-table tbody tr { border-bottom: 1px solid #f0f3f8; transition: all 0.2s ease; }
   .fund-table tbody tr:last-child { border-bottom: none; }
@@ -175,7 +176,7 @@
       <th>今年以来<br>收益/排名</th>
     </tr></thead>
     <tbody id="tbody">
-      <tr><td colspan="10" class="loading">数据加载中...</td></tr>
+      <tr><td colspan="9" class="loading">数据加载中...</td></tr>
     </tbody>
   </table>
   </div>
@@ -218,7 +219,7 @@ fetch('qdii_data.json')
   })
   .catch(err => {
     document.getElementById('stats').innerHTML = '<div class="load-error">数据加载失败: ' + err.message + '</div>';
-    document.getElementById('tbody').innerHTML = '<tr><td colspan="10" class="load-error">数据加载失败: ' + err.message + '</td></tr>';
+    document.getElementById('tbody').innerHTML = '<tr><td colspan="9" class="load-error">数据加载失败: ' + err.message + '</td></tr>';
     console.error('加载qdii_data.json失败:', err);
   });
 </script>

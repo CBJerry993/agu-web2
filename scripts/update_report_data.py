@@ -52,6 +52,14 @@ PERIODS = [
     ("y2", "2nzf", "近2年"),
 ]
 RET_INDEX = {"w1": 7, "m1": 8, "m3": 9, "m6": 10, "y1": 11, "y2": 12, "ytd": 14}
+QDII_PERIODS = [
+    ("w1", "zzf", "week"),
+    ("m1", "1yzf", "month"),
+    ("m3", "3yzf", "quarter"),
+    ("m6", "6yzf", "half-year"),
+    ("y1", "1nzf", "year"),
+    ("ytd", "jnzf", "ytd"),
+]
 FUND_TYPES = [
     ("gp", "股票型"),
     ("hh", "混合型"),
@@ -75,6 +83,7 @@ TYPE_TO_FT = {
     "货币": "hb",
 }
 PAGE_CACHE: dict[tuple[str, str, int], tuple[list[list[str]], int]] = {}
+DETAIL_PERIODS = ["w1", "m1", "m3", "m6", "ytd", "y1", "y2", "y3"]
 
 
 def read_json(path: Path) -> dict:
@@ -134,6 +143,56 @@ def fetch_page(ft: str, sc: str, page: int, page_size: int = 200) -> tuple[list[
     result = parse_rankhandler_entries(text)
     PAGE_CACHE[cache_key] = result
     return result
+
+
+def fetch_detail_stage_data(code: str) -> tuple[dict[str, str], dict[str, dict]]:
+    url = f"https://fund.eastmoney.com/{code}.html"
+    request = urllib.request.Request(url, headers={**HEADERS, "Referer": url})
+    with urllib.request.urlopen(request, timeout=20) as response:
+        html = response.read().decode("utf-8", errors="replace")
+
+    match = re.search(r'<li class="increaseAmount".*?</li>', html, flags=re.S)
+    if not match:
+        return {}, {}
+
+    values = [
+        re.sub(r"\s+", " ", item).strip()
+        for item in re.findall(r'<div class="Rdata[^>]*">\s*(.*?)\s*</div>', match.group(0), flags=re.S)
+    ]
+    if len(values) < 32:
+        return {}, {}
+
+    returns = {
+        period: values[idx].replace("%", "")
+        for idx, period in enumerate(DETAIL_PERIODS[:8])
+        if values[idx] and values[idx] != "--"
+    }
+    detail_ranks: dict[str, dict] = {}
+    for idx, period in enumerate(DETAIL_PERIODS[:8]):
+        rank_match = re.search(r"(\d+)\s*\|\s*(\d+)", values[24 + idx])
+        if rank_match:
+            detail_ranks[period] = {"rank": int(rank_match.group(1)), "total": int(rank_match.group(2))}
+    return returns, detail_ranks
+
+
+def fill_stage_data_from_detail_pages(funds: list[dict], ranks: dict, limit: int = 160) -> None:
+    if len(funds) > limit:
+        return
+    for idx, fund in enumerate(funds, start=1):
+        code = fund.get("code")
+        if not code:
+            continue
+        try:
+            returns, detail_ranks = fetch_detail_stage_data(code)
+        except Exception as exc:
+            print(f"[WARN] detail stage data unavailable for {code}: {exc}")
+            continue
+        fund.setdefault("returns", {}).update({key: value for key, value in returns.items() if key in RET_INDEX})
+        for period, rank_info in detail_ranks.items():
+            if period in ranks:
+                ranks[period][code] = {**rank_info, "type": fund.get("type", "")}
+        if idx % 25 == 0:
+            time.sleep(0.2)
 
 
 def type_to_ft(type_label: str | None) -> str:
@@ -242,6 +301,21 @@ def parse_float(value: str | int | float | None) -> float:
         return -999.0
 
 
+def format_purchase_amount(value: str | int | float | None) -> str:
+    amount = parse_float(value)
+    if amount == -999.0 or amount <= 0:
+        return "--"
+    if amount >= 9_999_999_999:
+        return "不限额"
+    if amount >= 100_000_000:
+        text = amount / 100_000_000
+        return f"{text:.1f}亿".replace(".0亿", "亿")
+    if amount >= 10_000:
+        text = amount / 10_000
+        return f"{text:.1f}万".replace(".0万", "万")
+    return f"{amount:.0f}元"
+
+
 def chunked(items: list[str], size: int) -> list[list[str]]:
     return [items[idx : idx + size] for idx in range(0, len(items), size)]
 
@@ -288,6 +362,13 @@ def normalize_ttfund_item(item: dict) -> dict:
         "name": item.get("fundName") or info.get("SHORTNAME") or code,
         "type": item.get("ftype") or "其他",
         "returns": returns,
+        "purchase": {
+            "isBuy": str(item.get("isBuy") or info.get("ISBUY") or ""),
+            "isSales": str(info.get("ISSALES") or ""),
+            "min": str(info.get("MINSG") or ""),
+            "max": str(info.get("MAXSG") or ""),
+            "fundType": str(item.get("ftype") or info.get("FUNDTYPE") or ""),
+        },
         "_ttfund_info": info,
     }
 
@@ -439,6 +520,7 @@ def fetch_latest_fund_dataset(
     try:
         funds, ranks = fetch_ttfund_dataset(target_codes, top_n=top_n)
         fill_w1_ranks_from_eastmoney(funds, ranks, type_by_code=type_by_code)
+        fill_stage_data_from_detail_pages(funds, ranks)
         return funds, ranks
     except Exception as exc:
         print(f"[WARN] TTFUND API unavailable, falling back to Eastmoney: {exc}")
@@ -538,6 +620,28 @@ def period_cell(code: str, value: str | None, period: str, ranks: dict) -> str:
     else:
         html += '<div class="cell-rank"><span class="rank-num">-- | --</span></div><div class="cell-pct"><span class="na">--</span></div>'
     return html + "</td>"
+
+
+def purchase_cell(fund: dict) -> str:
+    purchase = fund.get("purchase") or {}
+    is_buy = str(purchase.get("isBuy") or "")
+    max_amount = format_purchase_amount(purchase.get("max"))
+    type_text = f'{fund.get("type", "")}{purchase.get("fundType", "")}{fund.get("name", "")}'
+
+    if "ETF" in type_text.upper() and not is_buy:
+        tag = '<span class="tag tag-etf">场内交易</span>'
+        limit = "二级市场"
+    elif is_buy == "1":
+        tag = '<span class="tag tag-open">开放申购</span>'
+        limit = "不限额" if max_amount == "不限额" else f"限额{max_amount}"
+    elif is_buy == "0":
+        tag = '<span class="tag tag-stop">暂停申购</span>'
+        limit = "--"
+    else:
+        tag = '<span class="tag tag-limit">申购状态未知</span>'
+        limit = max_amount if max_amount != "--" else "--"
+
+    return f'<td class="purchase-cell">{tag}<div class="limit-text">{limit}</div></td>'
 
 
 def fund_links(fund: dict) -> str:
@@ -675,14 +779,12 @@ def build_qdii_tbody(funds: list[dict], ranks: dict) -> str:
     for idx, fund in enumerate(funds, start=1):
         cls = "row-even" if idx % 2 else "row-odd"
         returns = fund.get("returns", {})
-        ytd = parse_float(returns.get("ytd"))
-        ytd_text = f"{'+' if ytd > 0 else ''}{ytd:.2f}%" if ytd != -999 else "--"
-        cells = "".join(period_cell(fund["code"], returns.get(period), period, ranks) for period, _sc, _label in PERIODS)
+        cells = "".join(period_cell(fund["code"], returns.get(period), period, ranks) for period, _sc, _label in QDII_PERIODS)
         rows.append(
             f'''    <tr class="{cls}">
       <td>{idx}</td>
       <td class="col-fund">{fund_links(fund)} <span class="fname">{fund["name"]}</span><span class="fund-code">{fund["code"]}</span></td>
-      <td class="ret-ytd">{ytd_text}</td>
+      {purchase_cell(fund)}
       {cells}
     </tr>'''
         )
