@@ -280,7 +280,6 @@ function renderMatrix(d) {
     clearAttemptTimers();
     ATTEMPT_DELAYS.forEach(function(delay) {
       var timer = setTimeout(function() {
-        if (document.hidden) return;
         fetchMatrix()
           .then(function(d) {
             if (isFreshData(d)) {
@@ -298,10 +297,6 @@ function renderMatrix(d) {
 
     attemptTimers.push(setTimeout(scheduleNextWindow, ATTEMPT_DELAYS[ATTEMPT_DELAYS.length - 1] + 500));
   }
-
-  document.addEventListener('visibilitychange', function() {
-    if (!document.hidden) scheduleNextWindow();
-  });
 
   fetchMatrix()
     .then(function(d) {
