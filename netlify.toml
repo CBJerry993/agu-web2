@@ -1,6 +1,12 @@
 [build]
   publish = "."
   command = ""
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/etf-matrix"
+  to = "/.netlify/functions/etf-matrix"
+  status = 200
 
 [[redirects]]
   from = "/*"
