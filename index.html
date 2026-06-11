@@ -19,7 +19,6 @@
         <a href="pages/qdii.html">QDII</a>
         <a href="pages/top100.html">Top100</a>
         <a href="pages/etf_matrix.html">ETF矩阵</a>
-        <a href="#reports">报告</a>
         <a href="#disclaimer">免责</a>
       </div>
     </nav>
@@ -30,16 +29,17 @@
       <div class="hero-command">
         <p class="eyebrow">Fund Research Console</p>
         <h1>基金观察台</h1>
-        <p class="lead">把本地生成的基金报告收进一个统一入口，日常看 GS145、QDII 和后续扩展报告时，不再到处翻文件。</p>
-        <div class="hero-actions">
-          <a class="button primary" href="#reports">查看报告</a>
-          <a class="button subtle" href="reports/" target="_blank" rel="noopener">打开报告目录</a>
+        <p class="hero-summary">聚合 GS145、QDII、Top100 和 ETF 矩阵，把常看的基金报告收在一个清爽入口。</p>
+        <div class="hero-tags" aria-label="站点能力">
+          <span>分类报告</span>
+          <span>收益排行</span>
+          <span>ETF观察</span>
         </div>
       </div>
 
       <aside class="overview-board" aria-label="报告概览">
         <div class="board-header">
-          <span class="panel-label">Reports Online</span>
+          <span class="panel-label">在线报告</span>
           <strong>3</strong>
         </div>
         <div class="board-list">
@@ -72,76 +72,6 @@
           <span style="height: 91%"></span>
         </div>
       </aside>
-    </section>
-
-    <section class="ticker-row" aria-label="站点信息">
-      <div><span>当前报告</span><strong>3 个</strong></div>
-      <div><span>报告日期</span><strong>2026-06-03</strong></div>
-      <div><span>运行形态</span><strong>静态 HTML</strong></div>
-      <div><span>更新方式</span><strong>覆盖 reports 文件</strong></div>
-    </section>
-
-    <section class="report-section" id="reports">
-      <div class="section-intro compact-intro">
-        <p class="eyebrow">Report Library</p>
-        <h2>已接入报告</h2>
-        <p>workbuddy 后续只要把生成结果放到 `reports` 目录，并保持页面引用的文件名一致，首页和报告页就能直接读取。</p>
-      </div>
-
-      <div class="report-card-grid">
-        <a class="report-card primary-report" href="pages/gs145.html">
-          <div class="report-card-top">
-            <span class="report-badge">GS145</span>
-            <span class="report-date">2026-05-28</span>
-          </div>
-          <h3>GS145基金分类报告</h3>
-          <p>覆盖 145 只基金池，查看五级分类、涨跌幅表现与同类排名。</p>
-          <div class="report-metrics">
-            <span><strong>145</strong>基金样本</span>
-            <span><strong>5</strong>分类层级</span>
-            <span><strong>排名</strong>核心指标</span>
-          </div>
-          <span class="module-link">进入报告</span>
-        </a>
-
-        <a class="report-card qdii-report" href="pages/qdii.html">
-          <div class="report-card-top">
-            <span class="report-badge">QDII</span>
-            <span class="report-date">2026-05-28</span>
-          </div>
-          <h3>QDII海外基金收益排行</h3>
-          <p>面向海外基金的收益排行入口，适合观察跨市场基金表现。</p>
-          <div class="report-metrics">
-            <span><strong>海外</strong>基金范围</span>
-            <span><strong>收益</strong>排行口径</span>
-            <span><strong>QDII</strong>专题报告</span>
-          </div>
-          <span class="module-link">进入报告</span>
-        </a>
-
-        <a class="report-card top100-report" href="pages/top100.html">
-          <div class="report-card-top">
-            <span class="report-badge">TOP100</span>
-            <span class="report-date">2026-06-03</span>
-          </div>
-          <h3>全市场Top100基金收益排行</h3>
-          <p>全市场今年以来收益排名前100基金，含持仓透视分析。</p>
-          <div class="report-metrics">
-            <span><strong>100</strong>基金样本</span>
-            <span><strong>今年来</strong>核心指标</span>
-            <span><strong>持仓</strong>透视分析</span>
-          </div>
-          <span class="module-link">进入报告</span>
-        </a>
-      </div>
-    </section>
-
-    <section class="update-note">
-      <div>
-        <p class="eyebrow">Update Path</p>
-        <h2>workbuddy 下次生成到哪里？</h2>
-      </div>
-      <p>让 workbuddy 直接生成到 <code>D:\1.work\project\agu-web2\reports</code>。GS145 保持文件名 <code>gs_145fund_report.html</code>，QDII 保持文件名 <code>qdii_fund_report.html</code>，Top100 保持文件名 <code>top_100.html</code>，覆盖后网站会自动展示新版内容。</p>
     </section>
 
     <section class="disclaimer" id="disclaimer">
