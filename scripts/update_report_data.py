@@ -14,6 +14,7 @@ import datetime as _dt
 import json
 import os
 import re
+import subprocess as _subprocess
 import sys
 import time
 import urllib.parse
@@ -28,6 +29,15 @@ TODAY = _dt.date.today().strftime("%Y-%m-%d")
 
 API = "https://fund.eastmoney.com/data/rankhandler.aspx"
 TTFUND_API = "https://skills.tiantianfunds.com/ai-smart-skill-service/openapi/skill/invoke"
+
+TTSKILL_SKILL_MAP = {
+    "FUND_BASE_INFOS": "TTFUND_BASE_INFOS",
+    "FUND_CONDITION_SELECT": "TTFUND_CONDITION_SELECT",
+}
+
+TTSKILL_CMD = os.path.expandvars(
+    r"%LOCALAPPDATA%\TTFund\ttskill-base\ttskill-base-win32-x64-0.1.1\bin\ttskill.cmd"
+)
 HEADERS = {
     "User-Agent": "Mozilla/5.0 Chrome/120",
     "Referer": "https://fund.eastmoney.com/data/fundranking.html",
@@ -320,32 +330,47 @@ def chunked(items: list[str], size: int) -> list[list[str]]:
     return [items[idx : idx + size] for idx in range(0, len(items), size)]
 
 
+def ttfund_invoke(skill_id: str, payload: dict, max_retries: int = 3) -> dict:
+    new_skill_id = TTSKILL_SKILL_MAP.get(skill_id, skill_id)
+    body = dict(payload)
+    # Normalize old params to new schema
+    if "page" in body:
+        body["pageIndex"] = body.pop("page")
+    if "size" in body:
+        body["pageNum"] = body.pop("size")
+    if "sortColumn" in body and "orderField" not in body:
+        body["orderField"] = "5_10_-1"
+        body.pop("sortColumn")
+    body.pop("pageType", None)
+
+    body_json = json.dumps(body, ensure_ascii=False)
+    for attempt in range(max_retries):
+        try:
+            proc = _subprocess.run(
+                [TTSKILL_CMD, "invoke", new_skill_id, "--action", "query", "--body", body_json],
+                capture_output=True, text=True, encoding="utf-8", timeout=60,
+            )
+            if proc.returncode != 0:
+                stderr = proc.stderr[:300]
+                if "429" in stderr and attempt < max_retries - 1:
+                    wait = 60 * (attempt + 1)
+                    print(f"[WARN] ttskill {new_skill_id} 429 retry {attempt+1}/{max_retries}, wait {wait}s")
+                    time.sleep(wait)
+                    continue
+                print(f"[WARN] ttskill {new_skill_id} exit={proc.returncode}: {stderr}")
+                return {}
+            return json.loads(proc.stdout).get("data", {}).get("raw_result", {}).get("body", {})
+        except Exception as exc:
+            if attempt < max_retries - 1:
+                time.sleep(10 * (attempt + 1))
+                continue
+            print(f"[WARN] ttskill {new_skill_id}: {exc}")
+            return {}
+    return {}
+
+
 def ttfund_condition_select(payload: dict) -> list[dict]:
-    api_key = os.environ.get("TTFUND_APIKEY")
-    if not api_key:
-        raise RuntimeError("TTFUND_APIKEY is not set")
-
-    body = {
-        "skill_id": "FUND_CONDITION_SELECT",
-        "_skill_version": "1.2.0",
-        "pageType": 1,
-        "rankSy": "1",
-        **payload,
-    }
-    request = urllib.request.Request(
-        TTFUND_API,
-        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "X-API-Key": api_key,
-            "User-Agent": HEADERS["User-Agent"],
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(request, timeout=40) as response:
-        result = json.loads(response.read().decode("utf-8", errors="replace"))
-
-    raw_body = result.get("data", {}).get("raw_result", {}).get("body", {})
+    raw_body = ttfund_invoke("FUND_CONDITION_SELECT", {"pageType": 1, **payload})
     return raw_body.get("Data") or raw_body.get("data") or []
 
 
@@ -429,87 +454,96 @@ def fetch_ttfund_dataset(target_codes: set[str], top_n: int | None = None) -> tu
     return funds, ranks
 
 
-def fill_w1_ranks_from_eastmoney(
+def fill_ranks_from_eastmoney(
     funds: list[dict],
     ranks: dict[str, dict[str, dict]],
     type_by_code: dict[str, str] | None = None,
+    periods: list[tuple[str, str, str]] | None = None,
 ) -> None:
-    target_codes = {fund["code"] for fund in funds if fund["code"] not in ranks.get("w1", {})}
-    if not target_codes:
-        return
+    """Fill missing rankings from Eastmoney rankhandler API for all periods.
 
-    try:
-        rows, total = fetch_page("all", "zzf", 1, 20000)
-    except Exception as exc:
-        print(f"[WARN] w1/all: {exc}")
-        rows, total = [], 0
-
-    for idx, row in enumerate(rows):
-        if len(row) < 15:
-            continue
-        code = row[0]
-        if code not in target_codes:
-            continue
-        ranks.setdefault("w1", {})[code] = {
-            "rank": idx + 1,
-            "total": total or len(rows),
-            "type": "全部",
-        }
-        target_codes.discard(code)
-
-    if not target_codes:
-        return
+    For each period where some funds lack ranking data, scan the Eastmoney
+    rankhandler API pages to find those funds and compute their ranks.
+    """
+    target_periods = periods or PERIODS
 
     inferred_type_by_code = {fund["code"]: fund.get("type", "") for fund in funds}
     if type_by_code:
         inferred_type_by_code.update(type_by_code)
 
-    ft_targets: dict[str, set[str]] = defaultdict(set)
-    for code in target_codes:
-        ft_targets[type_to_ft(inferred_type_by_code.get(code))].add(code)
-
-    scan_plan = [(ft, label, ft_targets[ft]) for ft, label in FUND_TYPES if ft in ft_targets]
-    if not scan_plan:
-        scan_plan = [(ft, label, set(target_codes)) for ft, label in FUND_TYPES]
-
-    for ft, type_label, wanted in scan_plan:
-        remaining = set(wanted)
-        if not remaining:
+    for period_key, sort_col, period_label in target_periods:
+        missing_codes = {
+            fund["code"] for fund in funds
+            if fund["code"] not in ranks.get(period_key, {})
+        }
+        if not missing_codes:
             continue
 
-        page = 1
-        while True:
-            try:
-                rows, total = fetch_page(ft, "zzf", page)
-            except Exception as exc:
-                print(f"[WARN] w1/{ft}/p{page}: {exc}")
-                break
+        print(f"[EM] Filling {period_label} ranks for {len(missing_codes)} funds...")
 
-            if not rows:
-                break
+        # Scan by fund type (category-specific, matching East Money detail page)
+        ft_targets: dict[str, set[str]] = defaultdict(set)
+        for code in missing_codes:
+            ft_targets[type_to_ft(inferred_type_by_code.get(code))].add(code)
 
-            for idx, row in enumerate(rows):
-                if len(row) < 15:
-                    continue
-                code = row[0]
-                if code not in remaining:
-                    continue
+        scan_plan = [(ft, label, ft_targets[ft]) for ft, label in FUND_TYPES if ft in ft_targets]
+        if not scan_plan:
+            scan_plan = [(ft, label, set(missing_codes)) for ft, label in FUND_TYPES]
 
-                ranks.setdefault("w1", {})[code] = {
-                    "rank": (page - 1) * 200 + idx + 1,
-                    "total": total,
-                    "type": type_label,
-                }
-                remaining.discard(code)
-
+        for ft, type_label, wanted in scan_plan:
+            remaining = set(wanted)
             if not remaining:
-                break
-            if total <= page * 200:
-                break
-            if page >= 60:
-                break
-            page += 1
+                continue
+
+            page = 1
+            while True:
+                try:
+                    rows, total = fetch_page(ft, sort_col, page)
+                except Exception as exc:
+                    print(f"[WARN] {period_key}/{ft}/p{page}: {exc}")
+                    break
+
+                if not rows:
+                    break
+
+                for idx, row in enumerate(rows):
+                    if len(row) < 15:
+                        continue
+                    code = row[0]
+                    if code not in remaining:
+                        continue
+
+                    ranks.setdefault(period_key, {})[code] = {
+                        "rank": (page - 1) * 200 + idx + 1,
+                        "total": total,
+                        "type": type_label,
+                    }
+                    remaining.discard(code)
+
+                if not remaining:
+                    break
+                if total <= page * 200:
+                    break
+                if page >= 60:
+                    break
+                page += 1
+                time.sleep(0.03)
+
             time.sleep(0.03)
+
+        # Count how many funds got filled during this period
+        filled_now = sum(1 for code in missing_codes if code in ranks.get(period_key, {}))
+        print(f"[EM] {period_label}: filled {filled_now}/{len(missing_codes)}")
+
+
+def fill_w1_ranks_from_eastmoney(
+    funds: list[dict],
+    ranks: dict[str, dict[str, dict]],
+    type_by_code: dict[str, str] | None = None,
+) -> None:
+    """Backward-compatible wrapper: fill only w1 rankings."""
+    fill_ranks_from_eastmoney(funds, ranks, type_by_code=type_by_code, periods=[("w1", "zzf", "近1周")])
+
 
 
 def fetch_latest_fund_dataset(
@@ -519,7 +553,6 @@ def fetch_latest_fund_dataset(
 ) -> tuple[list[dict], dict]:
     try:
         funds, ranks = fetch_ttfund_dataset(target_codes, top_n=top_n)
-        fill_w1_ranks_from_eastmoney(funds, ranks, type_by_code=type_by_code)
         fill_stage_data_from_detail_pages(funds, ranks)
         return funds, ranks
     except Exception as exc:
