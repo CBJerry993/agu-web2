@@ -869,6 +869,33 @@ def main() -> None:
         update_qdii()
     if "top100" in targets:
         update_top100()
+    # Sync index.html dates from report data
+    sync_index_meta()
+
+
+def sync_index_meta() -> None:
+    """Update the three dates in index.html from each report's updateDate."""
+    index_path = ROOT / "index.html"
+    html = index_path.read_text(encoding="utf-8")
+    # Map board-item titles to report JSON keys
+    report_map = {
+        "GS145基金分类报告": ("gs145_data.json", "updateDate"),
+        "QDII海外基金收益排行": ("qdii_data.json", "updateDate"),
+        "全市场Top100基金收益排行": ("top100_data.json", "updateDate"),
+    }
+    for title, (fname, field) in report_map.items():
+        try:
+            data = read_json(REPORTS / fname)
+            date_str = data.get(field, "")
+            if date_str and re.match(r"\d{4}-\d{2}-\d{2}", date_str):
+                # Replace the date in the matching board-item
+                pattern = rf'(<span class="item-title">{re.escape(title)}</span>\s*<span class="item-meta">)(\d{{4}}-\d{{2}}-\d{{2}})(</span>)'
+                replacement = rf"\g<1>{date_str}\g<3>"
+                html = re.sub(pattern, replacement, html)
+        except Exception as exc:
+            print(f"[WARN] sync_index_meta {title}: {exc}")
+    index_path.write_text(html, encoding="utf-8")
+    print("index.html dates synced")
 
 
 if __name__ == "__main__":
