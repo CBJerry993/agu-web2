@@ -177,9 +177,12 @@ def fetch_detail_stage_data(code: str) -> tuple[dict[str, str], dict[str, dict]]
         for idx, period in enumerate(DETAIL_PERIODS[:8])
         if values[idx] and values[idx] != "--"
     }
+    # Eastmoney detail pages have different layouts:
+    #   32 Rdata → ranks at [24:32]; 40 Rdata → ranks at [32:40]
+    rank_offset = len(values) - 8
     detail_ranks: dict[str, dict] = {}
     for idx, period in enumerate(DETAIL_PERIODS[:8]):
-        rank_match = re.search(r"(\d+)\s*\|\s*(\d+)", values[24 + idx])
+        rank_match = re.search(r"(\d+)\s*\|\s*(\d+)", values[rank_offset + idx])
         if rank_match:
             detail_ranks[period] = {"rank": int(rank_match.group(1)), "total": int(rank_match.group(2))}
     return returns, detail_ranks
@@ -776,6 +779,7 @@ def update_gs145() -> None:
     type_by_code = {item["code"]: item.get("type", "") for item in source}
     fetched, ranks = fetch_latest_fund_dataset({item["code"] for item in source}, type_by_code=type_by_code)
     funds = merge_source_metadata(source, fetched)
+    fill_stage_data_from_detail_pages(funds, ranks)
     stats, sections = build_sections(funds, ranks)
     write_json(
         REPORTS / "gs145_data.json",
@@ -792,6 +796,7 @@ def update_gs145() -> None:
 
 def update_top100() -> None:
     source, ranks = fetch_latest_fund_dataset(set(), top_n=100)
+    fill_stage_data_from_detail_pages(source, ranks)
     stats, sections = build_sections(source, ranks, include_sort_marker=True)
     current = read_json(REPORTS / "top100_data.json")
     write_json(
@@ -831,6 +836,7 @@ def update_qdii() -> None:
     type_by_code = {item["code"]: item.get("type", "QDII/境外") for item in source}
     fetched, ranks = fetch_latest_fund_dataset({item["code"] for item in source}, type_by_code=type_by_code)
     funds = merge_source_metadata(source, fetched)
+    fill_stage_data_from_detail_pages(funds, ranks)
     funds.sort(key=lambda item: parse_float(item.get("returns", {}).get("ytd")), reverse=True)
     up_count = sum(1 for item in funds if parse_float(item.get("returns", {}).get("w1")) > 0)
     down_count = sum(1 for item in funds if parse_float(item.get("returns", {}).get("w1")) < 0)
