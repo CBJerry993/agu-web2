@@ -344,11 +344,13 @@ def ttfund_invoke(skill_id: str, payload: dict, max_retries: int = 3) -> dict:
     body.pop("pageType", None)
 
     body_json = json.dumps(body, ensure_ascii=False)
+    env = os.environ.copy()
+    env.pop("NODE_OPTIONS", None)
     for attempt in range(max_retries):
         try:
             proc = _subprocess.run(
                 [TTSKILL_CMD, "invoke", new_skill_id, "--action", "query", "--body", body_json],
-                capture_output=True, text=True, encoding="utf-8", timeout=60,
+                capture_output=True, text=True, encoding="utf-8", timeout=60, env=env,
             )
             if proc.returncode != 0:
                 stderr = proc.stderr[:300]
@@ -553,7 +555,6 @@ def fetch_latest_fund_dataset(
 ) -> tuple[list[dict], dict]:
     try:
         funds, ranks = fetch_ttfund_dataset(target_codes, top_n=top_n)
-        fill_stage_data_from_detail_pages(funds, ranks)
         return funds, ranks
     except Exception as exc:
         print(f"[WARN] TTFUND API unavailable, falling back to Eastmoney: {exc}")
