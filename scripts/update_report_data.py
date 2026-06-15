@@ -668,7 +668,7 @@ def purchase_cell(fund: dict) -> str:
     if "ETF" in type_text.upper() and not is_buy:
         tag = '<span class="tag tag-etf">场内交易</span>'
         limit = "二级市场"
-    elif is_buy == "1":
+    elif is_buy in ("1", "4"):
         tag = '<span class="tag tag-open">开放申购</span>'
         limit = "不限额" if max_amount == "不限额" else f"限额{max_amount}"
     elif is_buy == "0":
