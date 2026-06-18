@@ -42,9 +42,9 @@
     .login-card {
       background: #fff;
       border-radius: 12px;
-      padding: 40px 36px 32px;
-      width: 360px;
-      max-width: 92vw;
+      padding: 36px 32px 28px;
+      width: 420px;
+      max-width: 96vw;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       text-align: center;
     }
@@ -54,7 +54,7 @@
       color: var(--ink);
     }
     .login-card .sub {
-      margin: 0 0 28px;
+      margin: 0 0 20px;
       font-size: 13px;
       color: var(--muted);
     }
@@ -62,7 +62,7 @@
     .login-card input {
       width: 100%;
       padding: 10px 14px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       border: 1px solid #dcdfe6;
       border-radius: 6px;
       font-size: 14px;
@@ -74,28 +74,60 @@
       box-shadow: 0 0 0 2px rgba(27,103,201,0.1);
     }
 
-    /* 滑块验证 */
-    .slider-wrap {
+    /* ========== 拼图滑块 ========== */
+    .puzzle-box {
       position: relative;
       width: 100%;
-      height: 44px;
-      margin: 18px 0 20px;
-      background: #f0f2f5;
-      border-radius: 22px;
+      height: 150px;
+      margin: 16px 0 12px;
+      background: #f5f7fa;
+      border-radius: 6px;
       overflow: hidden;
-      user-select: none;
       border: 1px solid #e4e7ed;
     }
-    .slider-track {
+    .puzzle-bg {
       position: absolute;
       inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      color: #909399;
-      transition: color 0.3s;
-      pointer-events: none;
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.9);
+    }
+    .puzzle-hole {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      background: rgba(0,0,0,0.35);
+      border: 2px dashed rgba(255,255,255,0.6);
+      border-radius: 4px;
+      z-index: 1;
+    }
+    .puzzle-piece {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border-radius: 4px;
+      cursor: grab;
+      z-index: 2;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+    .puzzle-piece:active {
+      cursor: grabbing;
+    }
+    .puzzle-piece.verified {
+      border-color: #67c23a;
+      box-shadow: 0 0 0 3px rgba(103,194,58,0.3);
+    }
+
+    /* 滑块轨道 */
+    .slider-track-wrap {
+      position: relative;
+      width: 100%;
+      height: 36px;
+      margin: 12px 0 16px;
+      background: #e4e7ed;
+      border-radius: 18px;
+      overflow: hidden;
     }
     .slider-fill {
       position: absolute;
@@ -103,42 +135,44 @@
       top: 0;
       bottom: 0;
       width: 0;
-      background: linear-gradient(90deg, #e8f4fd, #d0e8fb);
-      border-radius: 22px 0 0 22px;
-      transition: width 0.15s ease-out;
+      background: linear-gradient(90deg, #c6e0ff, #a8d1ff);
+      border-radius: 18px 0 0 18px;
+      transition: width 0.1s linear;
     }
     .slider-thumb {
       position: absolute;
       left: 2px;
       top: 2px;
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       background: #fff;
       border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
       cursor: grab;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 14px;
       color: var(--blue);
       z-index: 2;
       transition: background 0.3s;
     }
     .slider-thumb:active {
       cursor: grabbing;
-      background: #f0f7ff;
     }
-    .slider-wrap.verified .slider-track {
-      color: #67c23a;
-    }
-    .slider-wrap.verified .slider-fill {
-      background: linear-gradient(90deg, #e1f3d8, #c6f0b5);
-      border-radius: 22px;
-    }
-    .slider-wrap.verified .slider-thumb {
+    .slider-thumb.verified {
       background: #67c23a;
       color: #fff;
+    }
+    .slider-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #909399;
+      pointer-events: none;
     }
 
     /* 登录按钮 */
@@ -167,6 +201,12 @@
       color: var(--red);
       min-height: 20px;
     }
+
+    .puzzle-tip {
+      font-size: 12px;
+      color: #909399;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -174,15 +214,22 @@
   <div id="login-overlay" class="login-overlay">
     <div class="login-card">
       <h2>🔒 持仓分析</h2>
-      <p class="sub">请输入账号密码并完成滑块验证</p>
+      <p class="sub">请输入账号密码并完成拼图验证</p>
 
       <input type="text" id="user-input" placeholder="账号" autocomplete="off">
       <input type="password" id="pass-input" placeholder="密码" autocomplete="off">
 
-      <div id="slider-wrap" class="slider-wrap">
+      <p class="puzzle-tip">拖动滑块，将拼图块移动到虚线框内</p>
+      <div class="puzzle-box" id="puzzle-box">
+        <div class="puzzle-bg" id="puzzle-bg"></div>
+        <div class="puzzle-hole" id="puzzle-hole"></div>
+        <div class="puzzle-piece" id="puzzle-piece"></div>
+      </div>
+
+      <div class="slider-track-wrap" id="slider-track">
         <div class="slider-fill" id="slider-fill"></div>
-        <div class="slider-track" id="slider-text">请向右滑动滑块验证</div>
-        <div class="slider-thumb" id="slider-thumb">→</div>
+        <div class="slider-text" id="slider-text">→ 拖动滑块完成拼图</div>
+        <div class="slider-thumb" id="slider-thumb">≡</div>
       </div>
 
       <button id="login-btn" class="login-btn" disabled>验 证</button>
@@ -206,6 +253,7 @@
   (function() {
     var USER = 'cbj';
     var PASS = 'cbj';
+    var BG_IMG = '../assets/Abstract_financial_technology__2026-06-18T04-02-26.png';
 
     // 已登录过，直接显示内容
     if (localStorage.getItem('holding_auth') === '1') {
@@ -213,11 +261,15 @@
       return;
     }
 
-    // ===== 滑块逻辑 =====
-    var wrap = document.getElementById('slider-wrap');
-    var fill = document.getElementById('slider-fill');
-    var thumb = document.getElementById('slider-thumb');
-    var text = document.getElementById('slider-text');
+    // ===== 拼图滑块逻辑 =====
+    var puzzleBox = document.getElementById('puzzle-box');
+    var puzzleBg = document.getElementById('puzzle-bg');
+    var puzzleHole = document.getElementById('puzzle-hole');
+    var puzzlePiece = document.getElementById('puzzle-piece');
+    var sliderTrack = document.getElementById('slider-track');
+    var sliderFill = document.getElementById('slider-fill');
+    var sliderThumb = document.getElementById('slider-thumb');
+    var sliderText = document.getElementById('slider-text');
     var loginBtn = document.getElementById('login-btn');
     var errEl = document.getElementById('login-err');
     var userInput = document.getElementById('user-input');
@@ -229,83 +281,118 @@
     var startX = 0;
     var startLeft = 0;
     var maxLeft = 0;
+    var targetX = 0;      // 目标位置（拼图片应该到达的位置）
+    var pieceStartX = 10; // 拼图片起始位置
+    var PIECE_SIZE = 42;  // 拼图片大小
+    var TOLERANCE = 5;    // 容差像素
 
-    function calcMax() {
-      maxLeft = wrap.clientWidth - thumb.clientWidth - 4;
+    // 初始化拼图
+    function initPuzzle() {
+      // 设置背景图
+      puzzleBg.style.backgroundImage = 'url(' + BG_IMG + ')';
+
+      // 随机生成目标位置（右侧区域）
+      var boxWidth = puzzleBox.clientWidth;
+      var minTarget = boxWidth * 0.5;  // 至少在中点右侧
+      var maxTarget = boxWidth - PIECE_SIZE - 10;
+      targetX = Math.floor(minTarget + Math.random() * (maxTarget - minTarget));
+
+      // 设置目标框位置
+      puzzleHole.style.left = targetX + 'px';
+      puzzleHole.style.top = '54px'; // 垂直居中
+
+      // 设置拼图片初始位置
+      puzzlePiece.style.left = pieceStartX + 'px';
+      puzzlePiece.style.top = '54px';
+      puzzlePiece.style.backgroundImage = 'url(' + BG_IMG + ')';
+      puzzlePiece.style.backgroundPosition = (-targetX) + 'px -54px';
+      puzzlePiece.style.backgroundSize = puzzleBox.clientWidth + 'px ' + puzzleBox.clientHeight + 'px';
+
+      // 计算滑块最大值
+      maxLeft = sliderTrack.clientWidth - sliderThumb.clientWidth - 4;
     }
-    calcMax();
-    window.addEventListener('resize', calcMax);
 
-    function setPos(px) {
+    // 设置滑块位置（同时移动拼图片）
+    function setSliderPos(px) {
       px = Math.max(2, Math.min(maxLeft + 2, px));
-      thumb.style.left = px + 'px';
-      fill.style.width = (px - 2 + 20) + 'px';
+      sliderThumb.style.left = px + 'px';
+      sliderFill.style.width = px + 'px';
 
-      if (px >= maxLeft + 2 - 3) {
-        // 到达终点
+      // 同步移动拼图片：从起始位置到目标位置
+      var progress = (px - 2) / maxLeft;
+      var pieceX = pieceStartX + progress * (targetX - pieceStartX);
+      puzzlePiece.style.left = pieceX + 'px';
+
+      // 检查是否到达目标
+      if (Math.abs(pieceX - targetX) <= TOLERANCE) {
         sliderVerified = true;
-        thumb.style.left = (maxLeft + 2) + 'px';
-        fill.style.width = '100%';
-        wrap.classList.add('verified');
-        text.textContent = '✓ 验证通过';
+        sliderThumb.classList.add('verified');
+        puzzlePiece.classList.add('verified');
+        sliderText.textContent = '✓ 验证通过';
         checkReady();
       }
     }
 
-    thumb.addEventListener('mousedown', function(e) {
+    // 事件处理
+    sliderThumb.addEventListener('mousedown', function(e) {
       if (sliderVerified) return;
       dragging = true;
       startX = e.clientX;
-      startLeft = parseInt(thumb.style.left) || 2;
-      thumb.style.transition = 'none';
-      fill.style.transition = 'none';
+      startLeft = parseInt(sliderThumb.style.left) || 2;
+      sliderThumb.style.transition = 'none';
+      sliderFill.style.transition = 'none';
+      puzzlePiece.style.transition = 'none';
       e.preventDefault();
     });
 
     document.addEventListener('mousemove', function(e) {
       if (!dragging || sliderVerified) return;
       var dx = e.clientX - startX;
-      setPos(startLeft + dx);
+      setSliderPos(startLeft + dx);
     });
 
     document.addEventListener('mouseup', function() {
       if (!dragging) return;
       dragging = false;
-      thumb.style.transition = 'left 0.3s ease';
-      fill.style.transition = 'width 0.3s ease';
+      sliderThumb.style.transition = 'left 0.3s ease';
+      sliderFill.style.transition = 'width 0.3s ease';
+      puzzlePiece.style.transition = 'left 0.3s ease';
+
       if (!sliderVerified) {
         // 弹回
-        setPos(2);
+        setSliderPos(2);
       }
     });
 
     // 触摸支持
-    thumb.addEventListener('touchstart', function(e) {
+    sliderThumb.addEventListener('touchstart', function(e) {
       if (sliderVerified) return;
       dragging = true;
       startX = e.touches[0].clientX;
-      startLeft = parseInt(thumb.style.left) || 2;
-      thumb.style.transition = 'none';
-      fill.style.transition = 'none';
+      startLeft = parseInt(sliderThumb.style.left) || 2;
+      sliderThumb.style.transition = 'none';
+      sliderFill.style.transition = 'none';
+      puzzlePiece.style.transition = 'none';
       e.preventDefault();
     });
+
     document.addEventListener('touchmove', function(e) {
       if (!dragging || sliderVerified) return;
       var dx = e.touches[0].clientX - startX;
-      setPos(startLeft + dx);
+      setSliderPos(startLeft + dx);
     });
+
     document.addEventListener('touchend', function() {
       if (!dragging) return;
       dragging = false;
-      thumb.style.transition = 'left 0.3s ease';
-      fill.style.transition = 'width 0.3s ease';
+      sliderThumb.style.transition = 'left 0.3s ease';
+      sliderFill.style.transition = 'width 0.3s ease';
+      puzzlePiece.style.transition = 'left 0.3s ease';
+
       if (!sliderVerified) {
-        setPos(2);
+        setSliderPos(2);
       }
     });
-
-    // 初始化滑块位置
-    setPos(2);
 
     // ===== 登录按钮状态 =====
     function checkReady() {
@@ -334,7 +421,7 @@
       }
 
       if (!sliderVerified) {
-        errEl.textContent = '请先完成滑块验证';
+        errEl.textContent = '请先完成拼图验证';
         return;
       }
 
@@ -356,6 +443,13 @@
       document.getElementById('main-content').style.display = '';
       if (overlay) overlay.classList.add('hidden');
     }
+
+    // 初始化
+    initPuzzle();
+    window.addEventListener('resize', function() {
+      maxLeft = sliderTrack.clientWidth - sliderThumb.clientWidth - 4;
+      if (!sliderVerified) setSliderPos(2);
+    });
   })();
   </script>
 </body>
