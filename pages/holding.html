@@ -23,29 +23,177 @@
       height: calc(100vh - 120px);
       min-height: 720px;
     }
+
+    /* ========== 登录验证层 ========== */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(7, 20, 37, 0.75);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-overlay.hidden {
+      display: none;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px 36px 32px;
+      width: 360px;
+      max-width: 92vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .login-card h2 {
+      margin: 0 0 4px;
+      font-size: 22px;
+      color: var(--ink);
+    }
+    .login-card .sub {
+      margin: 0 0 28px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .login-card input {
+      width: 100%;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      border: 1px solid #dcdfe6;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .login-card input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(27,103,201,0.1);
+    }
+
+    /* 滑块验证 */
+    .slider-wrap {
+      position: relative;
+      width: 100%;
+      height: 44px;
+      margin: 18px 0 20px;
+      background: #f0f2f5;
+      border-radius: 22px;
+      overflow: hidden;
+      user-select: none;
+      border: 1px solid #e4e7ed;
+    }
+    .slider-track {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: #909399;
+      transition: color 0.3s;
+      pointer-events: none;
+    }
+    .slider-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      background: linear-gradient(90deg, #e8f4fd, #d0e8fb);
+      border-radius: 22px 0 0 22px;
+      transition: width 0.15s ease-out;
+    }
+    .slider-thumb {
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      width: 40px;
+      height: 40px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--blue);
+      z-index: 2;
+      transition: background 0.3s;
+    }
+    .slider-thumb:active {
+      cursor: grabbing;
+      background: #f0f7ff;
+    }
+    .slider-wrap.verified .slider-track {
+      color: #67c23a;
+    }
+    .slider-wrap.verified .slider-fill {
+      background: linear-gradient(90deg, #e1f3d8, #c6f0b5);
+      border-radius: 22px;
+    }
+    .slider-wrap.verified .slider-thumb {
+      background: #67c23a;
+      color: #fff;
+    }
+
+    /* 登录按钮 */
+    .login-btn {
+      width: 100%;
+      padding: 11px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #c0c4cc;
+      color: #fff;
+      transition: background 0.25s;
+    }
+    .login-btn.ready {
+      background: var(--blue);
+    }
+    .login-btn.ready:hover {
+      background: #1659ad;
+    }
+
+    .login-err {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--red);
+      min-height: 20px;
+    }
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <nav class="nav">
-      <a class="brand" href="../index.html" aria-label="基金观察台首页">
-        <span class="brand-mark">F</span>
-        <span>基金观察台</span>
-      </a>
-      <div class="nav-links" aria-label="主要分类">
-        <a href="../index.html">首页</a>
-        <a href="gs145.html">GS145</a>
-        <a href="qdii.html">QDII</a>
-        <a href="top100.html">Top100</a>
-        <a href="etf_matrix.html">ETF矩阵</a>
-        <a class="active" href="holding.html">持仓</a>
-        <a href="../index.html#reports">报告</a>
-        <a href="../index.html#disclaimer">免责</a>
-      </div>
-    </nav>
-  </header>
+  <!-- ========== 登录验证层 ========== -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+      <h2>🔒 持仓分析</h2>
+      <p class="sub">请输入账号密码并完成滑块验证</p>
 
-  <main class="report-shell">
+      <input type="text" id="user-input" placeholder="账号" autocomplete="off">
+      <input type="password" id="pass-input" placeholder="密码" autocomplete="off">
+
+      <div id="slider-wrap" class="slider-wrap">
+        <div class="slider-fill" id="slider-fill"></div>
+        <div class="slider-track" id="slider-text">请向右滑动滑块验证</div>
+        <div class="slider-thumb" id="slider-thumb">→</div>
+      </div>
+
+      <button id="login-btn" class="login-btn" disabled>验 证</button>
+      <div class="login-err" id="login-err"></div>
+    </div>
+  </div>
+
+  <!-- ========== 主内容（通过后显示）========== -->
+  <script src="../assets/nav.js"></script>
+
+  <main class="report-shell" id="main-content" style="display:none">
     <div class="report-toolbar">
       <a href="../reports/my_holding_report.html" target="_blank" rel="noopener">单独打开报告 →</a>
     </div>
@@ -53,5 +201,162 @@
       <iframe class="report-frame" src="../reports/my_holding_report.html" title="我的持仓基金分析"></iframe>
     </section>
   </main>
+
+  <script>
+  (function() {
+    var USER = 'cbj';
+    var PASS = 'cbj';
+
+    // 已登录过，直接显示内容
+    if (localStorage.getItem('holding_auth') === '1') {
+      showContent();
+      return;
+    }
+
+    // ===== 滑块逻辑 =====
+    var wrap = document.getElementById('slider-wrap');
+    var fill = document.getElementById('slider-fill');
+    var thumb = document.getElementById('slider-thumb');
+    var text = document.getElementById('slider-text');
+    var loginBtn = document.getElementById('login-btn');
+    var errEl = document.getElementById('login-err');
+    var userInput = document.getElementById('user-input');
+    var passInput = document.getElementById('pass-input');
+    var overlay = document.getElementById('login-overlay');
+
+    var sliderVerified = false;
+    var dragging = false;
+    var startX = 0;
+    var startLeft = 0;
+    var maxLeft = 0;
+
+    function calcMax() {
+      maxLeft = wrap.clientWidth - thumb.clientWidth - 4;
+    }
+    calcMax();
+    window.addEventListener('resize', calcMax);
+
+    function setPos(px) {
+      px = Math.max(2, Math.min(maxLeft + 2, px));
+      thumb.style.left = px + 'px';
+      fill.style.width = (px - 2 + 20) + 'px';
+
+      if (px >= maxLeft + 2 - 3) {
+        // 到达终点
+        sliderVerified = true;
+        thumb.style.left = (maxLeft + 2) + 'px';
+        fill.style.width = '100%';
+        wrap.classList.add('verified');
+        text.textContent = '✓ 验证通过';
+        checkReady();
+      }
+    }
+
+    thumb.addEventListener('mousedown', function(e) {
+      if (sliderVerified) return;
+      dragging = true;
+      startX = e.clientX;
+      startLeft = parseInt(thumb.style.left) || 2;
+      thumb.style.transition = 'none';
+      fill.style.transition = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!dragging || sliderVerified) return;
+      var dx = e.clientX - startX;
+      setPos(startLeft + dx);
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (!dragging) return;
+      dragging = false;
+      thumb.style.transition = 'left 0.3s ease';
+      fill.style.transition = 'width 0.3s ease';
+      if (!sliderVerified) {
+        // 弹回
+        setPos(2);
+      }
+    });
+
+    // 触摸支持
+    thumb.addEventListener('touchstart', function(e) {
+      if (sliderVerified) return;
+      dragging = true;
+      startX = e.touches[0].clientX;
+      startLeft = parseInt(thumb.style.left) || 2;
+      thumb.style.transition = 'none';
+      fill.style.transition = 'none';
+      e.preventDefault();
+    });
+    document.addEventListener('touchmove', function(e) {
+      if (!dragging || sliderVerified) return;
+      var dx = e.touches[0].clientX - startX;
+      setPos(startLeft + dx);
+    });
+    document.addEventListener('touchend', function() {
+      if (!dragging) return;
+      dragging = false;
+      thumb.style.transition = 'left 0.3s ease';
+      fill.style.transition = 'width 0.3s ease';
+      if (!sliderVerified) {
+        setPos(2);
+      }
+    });
+
+    // 初始化滑块位置
+    setPos(2);
+
+    // ===== 登录按钮状态 =====
+    function checkReady() {
+      var hasUser = userInput.value.trim() !== '';
+      var hasPass = passInput.value.trim() !== '';
+      if (sliderVerified && hasUser && hasPass) {
+        loginBtn.classList.add('ready');
+        loginBtn.disabled = false;
+      } else {
+        loginBtn.classList.remove('ready');
+        loginBtn.disabled = true;
+      }
+    }
+
+    userInput.addEventListener('input', checkReady);
+    passInput.addEventListener('input', checkReady);
+
+    // ===== 登录验证 =====
+    loginBtn.addEventListener('click', function() {
+      var u = userInput.value.trim();
+      var p = passInput.value.trim();
+
+      if (u !== USER || p !== PASS) {
+        errEl.textContent = '账号或密码错误，请重试';
+        return;
+      }
+
+      if (!sliderVerified) {
+        errEl.textContent = '请先完成滑块验证';
+        return;
+      }
+
+      // 验证通过
+      errEl.textContent = '';
+      localStorage.setItem('holding_auth', '1');
+      overlay.classList.add('hidden');
+      showContent();
+    });
+
+    // 回车提交
+    passInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !loginBtn.disabled) {
+        loginBtn.click();
+      }
+    });
+
+    function showContent() {
+      document.getElementById('main-content').style.display = '';
+      if (overlay) overlay.classList.add('hidden');
+    }
+  })();
+  </script>
 </body>
 </html>
