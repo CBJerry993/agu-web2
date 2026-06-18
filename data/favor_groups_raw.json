@@ -1,0 +1,3 @@
+{
+  "detail": "该 skill 已升级，请安装对应 CLI 版本，复制粘贴以下提示词：“按照 https://skills.tiantianfunds.com/ttfund-skills/ttfund-skill-cli-install.md 安装并启用天天基金 ttskill CLI。安装基础包后同步业务 Skill 包列表，并主动执行 ttskill login 拉起扫码登录。”"
+}
