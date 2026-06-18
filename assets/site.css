@@ -615,6 +615,11 @@ h1 {
   color: #8b1a1a;
 }
 
+.item-code.accent3 {
+  background: #d4c5f9;
+  color: #4a2d8f;
+}
+
 .item-title {
   font-weight: 900;
 }
