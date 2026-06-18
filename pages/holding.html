@@ -256,10 +256,12 @@
     var BG_IMG = '../assets/Abstract_financial_technology__2026-06-18T04-02-26.png';
 
     // 已登录过，直接显示内容
-    if (localStorage.getItem('holding_auth') === '1') {
-      showContent();
-      return;
-    }
+    try {
+      if (localStorage.getItem('holding_auth') === '1') {
+        showContent();
+        return;
+      }
+    } catch(e) { /* localStorage 不可用，忽略 */ }
 
     // ===== 拼图滑块逻辑 =====
     var puzzleBox = document.getElementById('puzzle-box');
@@ -281,35 +283,56 @@
     var startX = 0;
     var startLeft = 0;
     var maxLeft = 0;
-    var targetX = 0;      // 目标位置（拼图片应该到达的位置）
-    var pieceStartX = 10; // 拼图片起始位置
-    var PIECE_SIZE = 42;  // 拼图片大小
-    var TOLERANCE = 5;    // 容差像素
+    var targetX = 0;
+    var pieceStartX = 10;
+    var PIECE_SIZE = 42;
+    var TOLERANCE = 5;
+
+    // 预加载背景图，确保图片可用后再初始化拼图
+    function preloadImage(url, cb) {
+      var img = new Image();
+      img.onload = function() { cb(true); };
+      img.onerror = function() { cb(false); };
+      img.src = url;
+    }
 
     // 初始化拼图
     function initPuzzle() {
+      var boxW = puzzleBox.clientWidth;
+      var boxH = puzzleBox.clientHeight;
+      if (boxW <= 0 || boxH <= 0) {
+        // DOM 尺寸还没就绪，稍后重试
+        setTimeout(initPuzzle, 100);
+        return;
+      }
+
       // 设置背景图
       puzzleBg.style.backgroundImage = 'url(' + BG_IMG + ')';
+      puzzleBg.style.backgroundSize = boxW + 'px ' + boxH + 'px';
 
       // 随机生成目标位置（右侧区域）
-      var boxWidth = puzzleBox.clientWidth;
-      var minTarget = boxWidth * 0.5;  // 至少在中点右侧
-      var maxTarget = boxWidth - PIECE_SIZE - 10;
+      var minTarget = Math.floor(boxW * 0.5);
+      var maxTarget = boxW - PIECE_SIZE - 10;
+      if (maxTarget <= minTarget) maxTarget = minTarget + 1;
       targetX = Math.floor(minTarget + Math.random() * (maxTarget - minTarget));
+
+      // 拼图垂直居中
+      var pieceTop = Math.floor((boxH - PIECE_SIZE) / 2);
 
       // 设置目标框位置
       puzzleHole.style.left = targetX + 'px';
-      puzzleHole.style.top = '54px'; // 垂直居中
+      puzzleHole.style.top = pieceTop + 'px';
 
-      // 设置拼图片初始位置
+      // 设置拼图片初始位置和裁剪
       puzzlePiece.style.left = pieceStartX + 'px';
-      puzzlePiece.style.top = '54px';
+      puzzlePiece.style.top = pieceTop + 'px';
       puzzlePiece.style.backgroundImage = 'url(' + BG_IMG + ')';
-      puzzlePiece.style.backgroundPosition = (-targetX) + 'px -54px';
-      puzzlePiece.style.backgroundSize = puzzleBox.clientWidth + 'px ' + puzzleBox.clientHeight + 'px';
+      puzzlePiece.style.backgroundPosition = (-targetX) + 'px -' + pieceTop + 'px';
+      puzzlePiece.style.backgroundSize = boxW + 'px ' + boxH + 'px';
 
       // 计算滑块最大值
       maxLeft = sliderTrack.clientWidth - sliderThumb.clientWidth - 4;
+      if (maxLeft <= 0) maxLeft = 200;
     }
 
     // 设置滑块位置（同时移动拼图片）
@@ -359,7 +382,6 @@
       puzzlePiece.style.transition = 'left 0.3s ease';
 
       if (!sliderVerified) {
-        // 弹回
         setSliderPos(2);
       }
     });
@@ -425,14 +447,11 @@
         return;
       }
 
-      // 验证通过
       errEl.textContent = '';
-      localStorage.setItem('holding_auth', '1');
-      overlay.classList.add('hidden');
+      try { localStorage.setItem('holding_auth', '1'); } catch(e) {}
       showContent();
     });
 
-    // 回车提交
     passInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && !loginBtn.disabled) {
         loginBtn.click();
@@ -440,12 +459,23 @@
     });
 
     function showContent() {
-      document.getElementById('main-content').style.display = '';
-      if (overlay) overlay.classList.add('hidden');
+      var el = document.getElementById('login-overlay');
+      if (el) el.classList.add('hidden');
+      el = document.getElementById('main-content');
+      if (el) el.style.display = '';
     }
 
-    // 初始化
-    initPuzzle();
+    // 预加载背景图，加载完成后初始化拼图
+    preloadImage(BG_IMG, function(ok) {
+      if (!ok) {
+        // 图片加载失败，提示用户
+        var tip = document.getElementById('slider-text');
+        if (tip) tip.textContent = '⚠ 验证图片加载失败，请刷新重试';
+        return;
+      }
+      initPuzzle();
+    });
+
     window.addEventListener('resize', function() {
       maxLeft = sliderTrack.clientWidth - sliderThumb.clientWidth - 4;
       if (!sliderVerified) setSliderPos(2);
