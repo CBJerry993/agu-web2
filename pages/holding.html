@@ -329,25 +329,34 @@
       if (maxLeft <= 0) maxLeft = 200;
     }
 
-    // 设置滑块位置（同时移动拼图片）
+    // 拼图片可移动范围（全宽）
+    function getPieceRange() {
+      return puzzleBox.clientWidth - PIECE_SIZE - 20;
+    }
+
+    // 设置滑块位置（同时移动拼图片），不在此处做验证判断
     function setSliderPos(px) {
       px = Math.max(2, Math.min(maxLeft + 2, px));
       sliderThumb.style.left = px + 'px';
       sliderFill.style.width = px + 'px';
 
-      // 同步移动拼图片：从起始位置到目标位置
+      // 同步移动拼图片：滑块全范围 → 拼图框全宽度
       var progress = (px - 2) / maxLeft;
-      var pieceX = pieceStartX + progress * (targetX - pieceStartX);
+      var pieceX = pieceStartX + progress * getPieceRange();
       puzzlePiece.style.left = pieceX + 'px';
+    }
 
-      // 检查是否到达目标
+    // 只在松手时验证位置
+    function verifyPiecePos(pieceX) {
       if (Math.abs(pieceX - targetX) <= TOLERANCE) {
         sliderVerified = true;
         sliderThumb.classList.add('verified');
         puzzlePiece.classList.add('verified');
         sliderText.textContent = '✓ 验证通过';
         checkReady();
+        return true;
       }
+      return false;
     }
 
     // 事件处理
@@ -376,7 +385,11 @@
       puzzlePiece.style.transition = 'left 0.3s ease';
 
       if (!sliderVerified) {
-        setSliderPos(2);
+        // 松手时验证拼图位置
+        var curX = parseFloat(puzzlePiece.style.left) || pieceStartX;
+        if (!verifyPiecePos(curX)) {
+          setSliderPos(2);
+        }
       }
     });
 
@@ -406,7 +419,10 @@
       puzzlePiece.style.transition = 'left 0.3s ease';
 
       if (!sliderVerified) {
-        setSliderPos(2);
+        var curX = parseFloat(puzzlePiece.style.left) || pieceStartX;
+        if (!verifyPiecePos(curX)) {
+          setSliderPos(2);
+        }
       }
     });
 
