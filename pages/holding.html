@@ -255,13 +255,7 @@
     var PASS = 'cbj';
     var BG_IMG = '../assets/Abstract_financial_technology__2026-06-18T04-02-26.png';
 
-    // 已登录过，直接显示内容
-    try {
-      if (localStorage.getItem('holding_auth') === '1') {
-        showContent();
-        return;
-      }
-    } catch(e) { /* localStorage 不可用，忽略 */ }
+    // 每次访问都需要验证（不做持久化）
 
     // ===== 拼图滑块逻辑 =====
     var puzzleBox = document.getElementById('puzzle-box');
@@ -448,7 +442,6 @@
       }
 
       errEl.textContent = '';
-      try { localStorage.setItem('holding_auth', '1'); } catch(e) {}
       showContent();
     });
 
