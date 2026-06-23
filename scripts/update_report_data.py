@@ -797,6 +797,20 @@ def update_gs145() -> None:
     print(f"GS145 updated: {len(funds)} funds")
 
 
+# 美股股票简介（20-30字）
+US_DESCS = {
+    "LITE": "Lumentum，全球领先的光通信激光器与3D传感供应商，苹果Face ID核心器件商。",
+    "GOOG": "谷歌母公司Alphabet，全球搜索引擎与AI霸主，旗下拥有YouTube、Android和云计算。",
+    "TSM": "台积电，全球最大芯片代工厂，制程技术领先，苹果、英伟达、AMD均为其核心客户。",
+    "WDC": "西部数据，全球硬盘与闪存存储巨头，数据中心存储解决方案核心供应商。",
+    "COHR": "Coherent，全球激光与光子系统领导者，光通信及半导体设备核心零部件供应商。",
+    "MU": "美光科技，全球DRAM与NAND闪存三巨头之一，AI算力存储核心供应商。",
+    "INTC": "英特尔，全球CPU与半导体龙头，推进IDM2.0战略向芯片代工领域转型。",
+    "NFLX": "奈飞，全球流媒体娱乐霸主，以原创内容加订阅模式重塑影视行业格局。",
+    "ASML": "阿斯麦，全球唯一EUV极紫外光刻机供应商，芯片制造不可替代的核心设备。",
+}
+
+
 def build_holdings_html(holdings_path: Path | None = None) -> str:
     """从 holdings_top100.json 生成持仓透视 HTML"""
     if holdings_path is None:
@@ -821,19 +835,25 @@ def build_holdings_html(holdings_path: Path | None = None) -> str:
         if not items:
             continue
         rows: list[str] = []
+        is_us = board == "美股"
         for item in items:
             bar = "█" * min(item["count"], 10) + ("░" * max(0, 10 - item["count"]))
+            desc_col = f'<td class="stock-desc">{US_DESCS.get(item["code"], "")}</td>' if is_us else ""
             rows.append(
                 f'<tr><td class="stock-code">{item["code"]}</td>'
                 f'<td class="stock-name">{item["name"]}</td>'
                 f'<td class="stock-freq"><span class="freq-bar">{bar}</span> '
-                f'<span class="freq-num">{item["count"]}次</span></td></tr>'
+                f'<span class="freq-num">{item["count"]}次</span></td>'
+                f'{desc_col}</tr>'
             )
+        header_cols = "<th>股票代码</th><th>股票简称</th><th>出现频次</th>"
+        if is_us:
+            header_cols += "<th>概念介绍</th>"
         parts.append(
             f'<div class="holdings-section">\n'
             f'  <div class="holdings-title" style="border-left-color:{color}">{board}重仓股</div>\n'
             f'  <table class="holdings-table"><thead><tr>'
-            f'<th>股票代码</th><th>股票简称</th><th>出现频次</th>'
+            f'{header_cols}'
             f'</tr></thead><tbody>{"".join(rows)}</tbody></table>\n'
             f'</div>'
         )
