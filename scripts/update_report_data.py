@@ -558,6 +558,9 @@ def fetch_latest_fund_dataset(
 ) -> tuple[list[dict], dict]:
     try:
         funds, ranks = fetch_ttfund_dataset(target_codes, top_n=top_n)
+        expected_count = top_n if top_n else len(target_codes)
+        if expected_count > 0 and not funds:
+            raise RuntimeError(f"TTFUND returned empty results (expected {expected_count})")
         return funds, ranks
     except Exception as exc:
         print(f"[WARN] TTFUND API unavailable, falling back to Eastmoney: {exc}")
@@ -794,11 +797,58 @@ def update_gs145() -> None:
     print(f"GS145 updated: {len(funds)} funds")
 
 
+def build_holdings_html(holdings_path: Path | None = None) -> str:
+    """从 holdings_top100.json 生成持仓透视 HTML"""
+    if holdings_path is None:
+        holdings_path = ROOT / "scripts" / "holdings_top100.json"
+    if not holdings_path.exists():
+        print(f"  [holdings] {holdings_path} not found, skipping")
+        return ""
+
+    holdings = json.loads(holdings_path.read_text(encoding="utf-8"))
+
+    boards = [
+        ("主板", "#1a5fac"),
+        ("创业板", "#e67e22"),
+        ("科创板", "#8e44ad"),
+        ("美股", "#c0392b"),
+        ("港股", "#27ae60"),
+    ]
+
+    parts: list[str] = []
+    for board, color in boards:
+        items = holdings.get(board, [])
+        if not items:
+            continue
+        rows: list[str] = []
+        for item in items:
+            bar = "█" * min(item["count"], 10) + ("░" * max(0, 10 - item["count"]))
+            rows.append(
+                f'<tr><td class="stock-code">{item["code"]}</td>'
+                f'<td class="stock-name">{item["name"]}</td>'
+                f'<td class="stock-freq"><span class="freq-bar">{bar}</span> '
+                f'<span class="freq-num">{item["count"]}次</span></td></tr>'
+            )
+        parts.append(
+            f'<div class="holdings-section">\n'
+            f'  <div class="holdings-title" style="border-left-color:{color}">{board}重仓股</div>\n'
+            f'  <table class="holdings-table"><thead><tr>'
+            f'<th>股票代码</th><th>股票简称</th><th>出现频次</th>'
+            f'</tr></thead><tbody>{"".join(rows)}</tbody></table>\n'
+            f'</div>'
+        )
+
+    if not parts:
+        return ""
+
+    return '\n<div class="section-title" style="border-left-color:#1a5fac;color:#1a5fac">📊 重仓股持仓透视</div>\n' + "\n".join(parts)
+
+
 def update_top100() -> None:
     source, ranks = fetch_latest_fund_dataset(set(), top_n=100)
     fill_stage_data_from_detail_pages(source, ranks)
     stats, sections = build_sections(source, ranks, include_sort_marker=True)
-    current = read_json(REPORTS / "top100_data.json")
+    holdings_html = build_holdings_html()
     write_json(
         REPORTS / "top100_data.json",
         {
@@ -807,7 +857,7 @@ def update_top100() -> None:
             "fundCount": len(source),
             "statsHtml": stats,
             "sectionsHtml": sections,
-            "holdingsHtml": current.get("holdingsHtml", ""),
+            "holdingsHtml": holdings_html,
         },
     )
     print(f"Top100 updated: {len(source)} funds")
@@ -868,14 +918,37 @@ def update_qdii() -> None:
     print(f"QDII updated: {len(funds)} funds")
 
 
+def update_holding() -> None:
+    current = read_json(REPORTS / "holding_data.json")
+    source = parse_funds_from_sections(current.get("sectionsHtml", ""))
+    type_by_code = {item["code"]: item.get("type", "") for item in source}
+    fetched, ranks = fetch_latest_fund_dataset({item["code"] for item in source}, type_by_code=type_by_code)
+    funds = merge_source_metadata(source, fetched)
+    fill_stage_data_from_detail_pages(funds, ranks)
+    stats, sections = build_sections(funds, ranks)
+    write_json(
+        REPORTS / "holding_data.json",
+        {
+            "updateDate": TODAY,
+            "generateDate": TODAY,
+            "fundCount": len(funds),
+            "statsHtml": stats,
+            "sectionsHtml": sections,
+        },
+    )
+    print(f"Holding updated: {len(funds)} funds")
+
+
 def main() -> None:
-    targets = set(sys.argv[1:] or ["gs145", "qdii", "top100"])
+    targets = set(sys.argv[1:] or ["gs145", "qdii", "top100", "holding"])
     if "gs145" in targets:
         update_gs145()
     if "qdii" in targets:
         update_qdii()
     if "top100" in targets:
         update_top100()
+    if "holding" in targets:
+        update_holding()
     # Sync index.html dates from report data
     sync_index_meta()
 
@@ -889,6 +962,7 @@ def sync_index_meta() -> None:
         "GS145基金分类报告": ("gs145_data.json", "updateDate"),
         "QDII海外基金收益排行": ("qdii_data.json", "updateDate"),
         "全市场Top100基金收益排行": ("top100_data.json", "updateDate"),
+        "我的持仓基金分析": ("holding_data.json", "updateDate"),
     }
     for title, (fname, field) in report_map.items():
         try:
