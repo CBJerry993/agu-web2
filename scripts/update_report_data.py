@@ -821,6 +821,21 @@ def build_holdings_html(holdings_path: Path | None = None) -> str:
 
     holdings = json.loads(holdings_path.read_text(encoding="utf-8"))
 
+    # 加载 holdings_analysis.json 中的 A 股简介，合并到简介查找表
+    intro_lookup: dict[str, str] = dict(US_DESCS)
+    analysis_path = ROOT / "data" / "holdings_analysis.json"
+    if analysis_path.exists():
+        try:
+            analysis = json.loads(analysis_path.read_text(encoding="utf-8"))
+            for board in ("主板", "创业板", "科创板", "港股"):
+                for item in analysis.get(board, []):
+                    code = item.get("code", "")
+                    intro = item.get("intro", "")
+                    if code and intro:
+                        intro_lookup[code] = intro
+        except Exception as e:
+            print(f"  [holdings] Failed to load {analysis_path}: {e}")
+
     boards = [
         ("主板", "#1a5fac"),
         ("创业板", "#e67e22"),
@@ -835,10 +850,10 @@ def build_holdings_html(holdings_path: Path | None = None) -> str:
         if not items:
             continue
         rows: list[str] = []
-        is_us = board == "美股"
         for item in items:
             bar = "█" * min(item["count"], 10) + ("░" * max(0, 10 - item["count"]))
-            desc_col = f'<td class="stock-desc">{US_DESCS.get(item["code"], "")}</td>' if is_us else ""
+            desc = intro_lookup.get(item["code"], "")
+            desc_col = f'<td class="stock-desc">{desc}</td>' if desc else '<td class="stock-desc"></td>'
             rows.append(
                 f'<tr><td class="stock-code">{item["code"]}</td>'
                 f'<td class="stock-name">{item["name"]}</td>'
@@ -846,14 +861,11 @@ def build_holdings_html(holdings_path: Path | None = None) -> str:
                 f'<span class="freq-num">{item["count"]}次</span></td>'
                 f'{desc_col}</tr>'
             )
-        header_cols = "<th>股票代码</th><th>股票简称</th><th>出现频次</th>"
-        if is_us:
-            header_cols += "<th>概念介绍</th>"
         parts.append(
             f'<div class="holdings-section">\n'
             f'  <div class="holdings-title" style="border-left-color:{color}">{board}重仓股</div>\n'
             f'  <table class="holdings-table"><thead><tr>'
-            f'{header_cols}'
+            f'<th>股票代码</th><th>股票简称</th><th>出现频次</th><th>概念介绍</th>'
             f'</tr></thead><tbody>{"".join(rows)}</tbody></table>\n'
             f'</div>'
         )
