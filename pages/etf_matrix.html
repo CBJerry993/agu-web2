@@ -9,21 +9,21 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #1a2035; font-size: 12px; min-height: 100vh; }
   .report-shell { max-width: 1400px; margin: 0 auto; padding: 0 16px 24px; }
-  .report-heading { margin: 0 0 14px; }
+  .report-heading { margin: 0 0 14px; display: flex; align-items: center; gap: 20px; }
+  .report-heading > div:first-child { flex: 1; }
+  .report-heading .pie-mini { flex-shrink: 0; width: 110px; height: 110px; background: rgba(255,255,255,0.1); border-radius: 12px; padding: 6px; }
+  .report-heading .pie-mini canvas { width: 100%; height: 100%; }
   .main { padding: 0 0 24px; }
 
   .chart-row { display: flex; gap: 16px; margin-bottom: 16px; align-items: stretch; }
   .chart-box { flex: 0 0 260px; background: white; border-radius: 10px; padding: 16px 0 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); display: flex; flex-direction: column; align-items: center; }
   .chart-box canvas { max-width: 200px; max-height: 200px; }
   .chart-summary { flex: 1; display: flex; gap: 10px; }
-  .stat-card { background: white; border-radius: 10px; padding: 12px 18px; flex: 1; min-width: 100px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); display: flex; flex-direction: column; justify-content: center; }
-  .stat-card .val { font-size: 28px; font-weight: 700; line-height: 1.2; }
-  .stat-card .lbl { font-size: 12px; margin-top: 2px; color: var(--muted); }
+  .stats-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .stat-card { background: white; border-radius: 10px; padding: 10px 14px; flex: 1; min-width: 80px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); text-align: center; }
+  .stat-card .val { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .stat-card .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .stat-card .sub { font-size: 13px; margin-top: 4px; }
-  .stat-card.bull { border-left: 4px solid #c0392b; }
-  .stat-card.bear { border-left: 4px solid #27ae60; }
-  .stat-card.neutral { border-left: 4px solid #8e9aaf; }
-  .stat-card.total { border-left: 4px solid #1a5fac; }
   .bull-color { color: #c0392b; }
   .bear-color { color: #27ae60; }
   .neutral-color { color: #8e9aaf; }
@@ -84,33 +84,28 @@
         <p>全市场ETF + 核心指数均线排列扫描 · 数据来源：iQuant · MA5/10/20/30/60</p>
         <p style="font-size:12px;color:var(--muted);margin-top:4px" id="hdrTime">--</p>
       </div>
+      <div class="pie-mini">
+        <canvas id="etfPie" role="img" aria-label="ETF多空分布饼图"></canvas>
+      </div>
     </section>
 
     <div class="main">
-      <div class="chart-row">
-        <div class="chart-box">
-          <canvas id="etfPie" role="img" aria-label="ETF多空分布饼图"></canvas>
+      <div class="stats-row">
+        <div class="stat-card total">
+          <div class="val" id="totalS">--</div>
+          <div class="lbl">扫描总数</div>
         </div>
-        <div class="chart-summary">
-          <div class="stat-card total">
-            <div class="val" id="totalS">--</div>
-            <div class="lbl">扫描ETF总数</div>
-          </div>
-          <div class="stat-card bull">
-            <div class="val bull-color" id="bullN">--</div>
-            <div class="lbl">ETF多头</div>
-            <div class="sub" id="bullPct">占比 --</div>
-          </div>
-          <div class="stat-card bear">
-            <div class="val bear-color" id="bearN">--</div>
-            <div class="lbl">ETF空头</div>
-            <div class="sub" id="bearPct">占比 --</div>
-          </div>
-          <div class="stat-card neutral">
-            <div class="val neutral-color" id="neutralN">--</div>
-            <div class="lbl">观望/横盘</div>
-            <div class="sub" id="neutralPct">占比 --</div>
-          </div>
+        <div class="stat-card bull">
+          <div class="val bull-color" id="bullN">--</div>
+          <div class="lbl">多头 <span id="bullPct">--</span></div>
+        </div>
+        <div class="stat-card bear">
+          <div class="val bear-color" id="bearN">--</div>
+          <div class="lbl">空头 <span id="bearPct">--</span></div>
+        </div>
+        <div class="stat-card neutral">
+          <div class="val neutral-color" id="neutralN">--</div>
+          <div class="lbl">观望 <span id="neutralPct">--</span></div>
         </div>
       </div>
 
