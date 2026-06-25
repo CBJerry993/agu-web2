@@ -154,6 +154,7 @@
     iQuant 实时扫描 · 每5分钟自动更新 | “次数”为连续满足均线多空排列的次数
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <script src="../data/etf_scan.js"></script>
   <script>
 function badgeCls(n) {
@@ -273,10 +274,17 @@ function renderMatrix(d) {
   }
 
   function fetchMatrix() {
-    return fetch('/api/etf-matrix?t=' + Date.now(), { cache: 'no-store' })
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 5000);
+    return fetch('/api/etf-matrix?t=' + Date.now(), { cache: 'no-store', signal: controller.signal })
     .then(function(r) {
+      clearTimeout(timeoutId);
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
+    })
+    .catch(function(err) {
+      clearTimeout(timeoutId);
+      throw err;
     });
   }
 
@@ -326,13 +334,15 @@ function renderMatrix(d) {
       scheduleNextWindow();
     });
 })();
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <script>
   var etfPieChart = null;
 
   function updatePieChart(total, bull, bear, neutral) {
     var ctx = document.getElementById('etfPie');
-    if (!ctx) return;
+    if (!ctx || typeof Chart === 'undefined') {
+      console.warn('Chart.js not loaded yet, skipping pie chart update');
+      return;
+    }
 
     var bullPct = bull / total * 100;
     var labels = ['多头 ' + bullPct.toFixed(1) + '%', '空头', '观望'];
