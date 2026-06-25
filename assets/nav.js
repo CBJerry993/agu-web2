@@ -10,7 +10,9 @@
     { label: 'QDII',       href: prefix + '/pages/qdii.html',                          id: 'qdii' },
     { label: 'Top100',     href: prefix + '/pages/top100.html',                        id: 'top100' },
     { label: 'ETF矩阵',    href: prefix + '/pages/etf_matrix.html',                    id: 'etf_matrix' },
+    { label: '新高',       href: prefix + '/pages/new_high.html',                       id: 'new_high' },
     { label: '持仓',       href: prefix + '/pages/holding.html',                        id: 'holding' },
+    { label: '观点',       href: prefix + '/pages/wu2198.html',                       id: 'wu2198' },
     { label: '免责',       href: prefix + '/index.html#disclaimer',                     id: 'disclaimer' }
   ];
 

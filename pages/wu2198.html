@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>wu2198 观点追踪 - 基金观察台</title>
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  .main { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+
+  /* report-heading 白色卡片 */
+  .report-heading {
+    background: var(--panel); border-radius: 12px; padding: 22px 28px;
+    margin-bottom: 18px; box-shadow: var(--shadow);
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .report-heading .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+  }
+  .report-heading h1 { font-size: 22px; font-weight: 800; color: var(--ink); margin: 0; }
+  .report-heading .desc { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+  .report-heading .date-line { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* 分类筛选栏 */
+  .filter-bar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px;
+    align-items: center;
+  }
+  .filter-bar .filter-label {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px;
+  }
+  .filter-pill {
+    padding: 6px 16px; border-radius: 20px; font-size: 13px;
+    font-weight: 600; cursor: pointer; border: 1.5px solid var(--line);
+    background: var(--panel); color: var(--muted);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    user-select: none; white-space: nowrap;
+  }
+  .filter-pill:hover {
+    color: var(--ink); border-color: #bcc3d2; background: #f5f6fa;
+  }
+  .filter-pill.active {
+    color: #fff; background: #071425; border-color: #071425;
+    font-weight: 700;
+  }
+  .filter-pill .count { font-size: 11px; opacity: 0.7; margin-left: 4px; }
+
+  /* ============ 观点总结区（两块） ============ */
+  .summary-card {
+    background: var(--panel); border-radius: 12px;
+    padding: 18px 22px; margin-bottom: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+  .summary-card h2 {
+    font-size: 16px; font-weight: 800; color: var(--ink);
+    margin: 0 0 14px 0; padding-bottom: 10px;
+    border-bottom: 2px solid var(--line);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .summary-card .hint {
+    font-size: 11px; font-weight: 400; color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* 关键点位表格 */
+  .levels-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .levels-table thead th {
+    padding: 7px 10px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    text-align: left; color: var(--muted);
+    border-bottom: 2px solid var(--line);
+  }
+  .levels-table tbody td {
+    padding: 8px 10px; vertical-align: middle;
+    border-bottom: 1px solid #f0f3f8;
+  }
+  .levels-table tbody tr:last-child td { border-bottom: none; }
+  .levels-table tbody tr:hover { background: #f8f9fe; }
+  .levels-table .lev-date { font-weight: 700; white-space: nowrap; color: var(--ink); width: 75px; }
+  .levels-table .lev-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .levels-table .lev-summary { color: var(--ink); line-height: 1.5; }
+  .levels-table .lev-levels { white-space: nowrap; }
+  .level-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 3px 10px; border-radius: 14px; font-size: 13px;
+    font-weight: 700; margin: 2px 4px;
+  }
+  .level-chip.support { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .level-chip.resist  { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
+  .level-chip.close   { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+  .level-chip .lbl { font-size: 10px; opacity: 0.7; }
+
+  .lev-link { font-size: 11px; }
+  .lev-link a { color: var(--blue); text-decoration: none; white-space: nowrap; }
+  .lev-link a:hover { text-decoration: underline; }
+
+  /* 热门观点 — 新闻标题风格 */
+  .hot-list { margin: 0; padding: 0; list-style: none; }
+  .hot-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; font-size: 13px;
+    border-bottom: 1px solid #f0f3f8; flex-wrap: wrap;
+  }
+  .hot-item:last-child { border-bottom: none; }
+  .hot-item .hi-date { font-size: 12px; font-weight: 700; white-space: nowrap; width: 75px; color: var(--muted); }
+  .hot-item .hi-cat {
+    display: inline-block; padding: 1px 8px; border-radius: 3px;
+    font-size: 10px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+  }
+  .hot-item .hi-title {
+    flex: 1; color: var(--blue); cursor: pointer; line-height: 1.5;
+    text-decoration: none; font-weight: 600;
+  }
+  .hot-item .hi-title:hover { text-decoration: underline; color: #0d5fc5; }
+
+  .summary-empty {
+    text-align: center; padding: 18px; color: var(--muted); font-size: 13px;
+  }
+
+  /* ============ 时间线（详情） ============ */
+  .timeline-section { margin-top: 4px; }
+  .timeline-section h2 {
+    font-size: 16px; font-weight: 800; color: var(--ink);
+    margin: 0 0 14px 0; padding-bottom: 10px;
+    border-bottom: 2px solid var(--line);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .timeline-section h2::after {
+    content: '原文完整内容';
+    font-size: 11px; font-weight: 400; color: var(--muted);
+    margin-left: auto;
+  }
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+    width: 2px; background: var(--line);
+  }
+
+  .view-card {
+    position: relative; background: var(--panel); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 14px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s ease;
+  }
+  .view-card:hover { box-shadow: 0 3px 16px rgba(0,0,0,0.1); }
+  .view-card::before {
+    content: ''; position: absolute; left: -24px; top: 20px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--muted); border: 2px solid var(--panel);
+    box-shadow: 0 0 0 2px var(--line);
+  }
+
+  .card-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .card-date { font-size: 13px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .card-time { font-size: 12px; color: var(--muted); }
+  .card-cat {
+    display: inline-block; padding: 2px 10px; border-radius: 4px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+  .card-tag {
+    display: inline-block; padding: 1px 8px; border-radius: 3px;
+    font-size: 10px; background: #f0f3f8; color: var(--muted);
+    letter-spacing: 0.2px;
+  }
+
+  .card-body { font-size: 14px; line-height: 1.7; color: var(--ink); margin-bottom: 8px; }
+
+  .card-foot {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 11px; color: var(--muted);
+  }
+  .card-foot a { color: var(--blue); text-decoration: none; }
+  .card-foot a:hover { text-decoration: underline; }
+  .verified-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; color: #2e7d32;
+  }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--muted); font-size: 14px;
+  }
+
+  .page-footer { text-align: center; color: #aaa; font-size: 11px; padding: 20px; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <script src="../assets/nav.js"></script>
+
+  <main class="main">
+    <!-- report-heading -->
+    <section class="report-heading">
+      <div>
+        <p class="eyebrow">Opinion Tracker</p>
+        <h1>wu2198 投资观点追踪</h1>
+        <p class="desc">
+          追踪微博博主 <strong>wu2198</strong>（粉丝50万+）的投资市场观点。
+          分类：<span style="color:#1976d2">美股</span> ·
+          <span style="color:#c62828">港股</span> ·
+          <span style="color:#e65100">A股点位</span> ·
+          <span style="color:#2e7d32">A股板块</span> ·
+          <span style="color:#f9a825">黄金</span> ·
+          <span style="color:#6a1b9a">其他投资观点</span>
+        </p>
+        <p class="date-line" id="date-line">数据截至 ——，共收录 N 条观点</p>
+      </div>
+    </section>
+
+    <!-- 分类筛选 -->
+    <div class="filter-bar">
+      <span class="filter-label">分类筛选</span>
+      <span class="filter-pill active" data-cat="all" onclick="filterBy('all')">全部</span>
+    </div>
+
+    <!-- ========== 观点总结 ========== -->
+    <!-- 1. 关键点位 -->
+    <section class="summary-card" id="levels-card">
+      <h2>🎯 关键点位 <span class="hint">支撑 / 阻力 / 收盘</span></h2>
+      <div id="levels-content"></div>
+    </section>
+
+    <!-- 2. 热门观点 -->
+    <section class="summary-card" id="hot-card">
+      <h2>🔥 热门观点 <span class="hint">点击标题查看原文</span></h2>
+      <div id="hot-content"></div>
+    </section>
+
+    <!-- ========== 时间线（原文详情） ========== -->
+    <section class="timeline-section">
+      <h2>📜 原文详情</h2>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <div class="page-footer">
+      ⚠️ 观点来源于微博公开内容，仅供研究参考，不构成投资建议。<br>
+      数据获取方式：当前为手动维护阶段，后续考虑自动化方案。
+    </div>
+  </main>
+
+  <script src="../data/wu2198_views.js"></script>
+  <script>
+    (function() {
+      var views = WU2198_VIEWS;
+      var colors = WU2198_CATEGORY_COLORS;
+      var icons = WU2198_CATEGORY_ICONS;
+
+      // 按日期倒序
+      views.sort(function(a, b) {
+        return (b.date + b.time).localeCompare(a.date + a.time);
+      });
+
+      // 计算统计
+      var cats = ["美股","港股","A股点位","A股板块","黄金","其他投资观点"];
+      var counts = {};
+      cats.forEach(function(c) { counts[c] = 0; });
+      views.forEach(function(v) { counts[v.category]++; });
+
+      // 日期信息
+      var latest = views.length > 0 ? views[0].date : '——';
+      document.getElementById('date-line').textContent =
+        '数据截至 ' + latest + '，共收录 ' + views.length + ' 条观点';
+
+      // 筛选按钮
+      var filterBar = document.querySelector('.filter-bar');
+      cats.forEach(function(c) {
+        var span = document.createElement('span');
+        span.className = 'filter-pill';
+        span.dataset.cat = c;
+        span.onclick = function() { filterBy(c); };
+        span.innerHTML = icons[c] + ' ' + c + '<span class="count">' + counts[c] + '</span>';
+        filterBar.appendChild(span);
+      });
+
+      // ==================== 关键点位渲染 ====================
+      function renderLevels(filterCat) {
+        var filtered = filterCat === 'all'
+          ? views
+          : views.filter(function(v) { return v.category === filterCat; });
+
+        // 只取有 levels 数据的
+        var withLevels = filtered.filter(function(v) { return v.levels; });
+
+        if (withLevels.length === 0) {
+          document.getElementById('levels-content').innerHTML =
+            '<div class="summary-empty">暂无点位数据</div>';
+          return;
+        }
+
+        var html = '<table class="levels-table"><thead><tr>' +
+          '<th style="width:75px">日期</th>' +
+          '<th style="width:100px">市场</th>' +
+          '<th>摘要</th>' +
+          '<th style="text-align:center">点位快照</th>' +
+          '<th style="width:70px"></th>' +
+          '</tr></thead><tbody>';
+
+        withLevels.forEach(function(v) {
+          var catColor = colors[v.category] || { bg: '#eee', border: '#999', text: '#666' };
+
+          var chips = [];
+          if (v.levels.close !== null) {
+            chips.push('<span class="level-chip close"><span class="lbl">收盘</span> ' + v.levels.close + '</span>');
+          }
+          (v.levels.support || []).forEach(function(s) {
+            chips.push('<span class="level-chip support"><span class="lbl">支撑</span> ' + s + '</span>');
+          });
+          (v.levels.resistance || []).forEach(function(r) {
+            chips.push('<span class="level-chip resist"><span class="lbl">阻力</span> ' + r + '</span>');
+          });
+          if (v.levels.note) {
+            chips.push('<span style="font-size:11px;color:var(--muted);margin-left:4px">' + v.levels.note + '</span>');
+          }
+
+          html += '<tr>' +
+            '<td class="lev-date">' + v.date + '</td>' +
+            '<td><span class="lev-badge" style="background:' + catColor.bg +
+              ';color:' + catColor.text + ';border:1px solid ' + catColor.border + '">' +
+              icons[v.category] + ' ' + v.category + '</span></td>' +
+            '<td class="lev-summary">' + (v.summary || v.content.slice(0, 60) + '…') + '</td>' +
+            '<td class="lev-levels" style="text-align:center">' + chips.join('') + '</td>' +
+            '<td class="lev-link"><a href="' + v.source_url + '" target="_blank" rel="noopener">查看原文 →</a></td>' +
+            '</tr>';
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('levels-content').innerHTML = html;
+      }
+
+      // ==================== 热门观点渲染 ====================
+      function renderHot(filterCat) {
+        var filtered = filterCat === 'all'
+          ? views
+          : views.filter(function(v) { return v.category === filterCat; });
+
+        if (filtered.length === 0) {
+          document.getElementById('hot-content').innerHTML =
+            '<div class="summary-empty">暂无观点</div>';
+          return;
+        }
+
+        var html = '<ul class="hot-list">';
+        filtered.forEach(function(v) {
+          var catColor = colors[v.category] || { bg: '#eee', border: '#999', text: '#666' };
+          html += '<li class="hot-item">' +
+            '<span class="hi-date">' + v.date + '</span>' +
+            '<span class="hi-cat" style="background:' + catColor.bg +
+              ';color:' + catColor.text + ';border:1px solid ' + catColor.border + '">' +
+              icons[v.category] + ' ' + v.category + '</span>' +
+            '<a class="hi-title" href="' + v.source_url + '" target="_blank" rel="noopener">' +
+              (v.summary || v.content.slice(0, 100)) + '</a>' +
+            '</li>';
+        });
+        html += '</ul>';
+        document.getElementById('hot-content').innerHTML = html;
+      }
+
+      // ==================== 时间线渲染 ====================
+      function renderTimeline(filterCat) {
+        var filtered = filterCat === 'all'
+          ? views
+          : views.filter(function(v) { return v.category === filterCat; });
+
+        if (filtered.length === 0) {
+          document.getElementById('timeline').innerHTML =
+            '<div class="empty-state">该分类暂无观点记录</div>';
+          return;
+        }
+
+        var html = '';
+        filtered.forEach(function(v) {
+          var catColor = colors[v.category] || { bg: '#eee', border: '#999', text: '#666' };
+          var tagsHTML = '';
+          if (v.tags && v.tags.length > 0) {
+            tagsHTML = '<div class="card-tags">' +
+              v.tags.map(function(t) {
+                return '<span class="card-tag">#' + t + '</span>';
+              }).join('') +
+              '</div>';
+          }
+          var verifiedHTML = v.verified
+            ? '<span class="verified-badge">✓ 已核实原文</span>'
+            : '';
+
+          html += '<div class="view-card">' +
+            '<div class="card-head">' +
+              '<span class="card-date">' + v.date + '</span>' +
+              '<span class="card-time">' + v.time + '</span>' +
+              '<span class="card-cat" style="background:' + catColor.bg +
+                ';color:' + catColor.text + ';border:1px solid ' + catColor.border + '">' +
+                icons[v.category] + ' ' + v.category + '</span>' +
+              tagsHTML +
+            '</div>' +
+            '<div class="card-body">' + v.content + '</div>' +
+            '<div class="card-foot">' +
+              verifiedHTML +
+              '<a href="' + v.source_url + '" target="_blank" rel="noopener">查看原文 →</a>' +
+            '</div>' +
+            '</div>';
+        });
+
+        document.getElementById('timeline').innerHTML = html;
+      }
+
+      // 筛选切换
+      window.filterBy = function(cat) {
+        var pills = document.querySelectorAll('.filter-pill');
+        pills.forEach(function(p) {
+          p.classList.toggle('active', p.dataset.cat === cat);
+        });
+        renderLevels(cat);
+        renderHot(cat);
+        renderTimeline(cat);
+      };
+
+      // 初始渲染
+      renderLevels('all');
+      renderHot('all');
+      renderTimeline('all');
+    })();
+  </script>
+</body>
+</html>
