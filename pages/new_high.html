@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新高基金 &amp; 重仓股透视 - 基金观察台</title>
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  /* 覆盖 body 背景以匹配 QDII 报告模板 */
+  body { background: #f0f3f8; }
+
+  .page-header {
+    background: linear-gradient(135deg, #0d2b6e 0%, #1a5fac 50%, #0d8fd9 100%);
+    color: white; padding: 22px 28px 18px; position: relative; overflow: hidden;
+  }
+  .page-header::after { content: ''; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+  .page-header h1 { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+  .page-header .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
+  .page-header .subtitle { font-size: 14px; opacity: 0.85; margin-top: 6px; }
+  .page-header .update-time { font-size: 13px; opacity: 0.7; margin-top: 3px; text-align: right; }
+
+  .main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+
+  .stats-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stat-card { background: white; border-radius: 10px; padding: 12px 16px; flex: 1; min-width: 100px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); border-top: 3px solid; text-align: center; }
+  .stat-card .val { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .stat-card .lbl { font-size: 11px; margin-top: 3px; }
+  .stat-card.blue    { border-color: #1a5fac; }
+  .stat-card.blue .val,    .stat-card.blue .lbl    { color: #1a5fac; }
+  .stat-card.red     { border-color: #c0392b; }
+  .stat-card.red .val,     .stat-card.red .lbl     { color: #c0392b; }
+  .stat-card.green   { border-color: #27ae60; }
+  .stat-card.green .val,   .stat-card.green .lbl   { color: #27ae60; }
+  .stat-card.orange  { border-color: #e67e22; }
+  .stat-card.orange .val,  .stat-card.orange .lbl  { color: #e67e22; }
+  .stat-card.purple  { border-color: #8e44ad; }
+  .stat-card.purple .val,  .stat-card.purple .lbl  { color: #8e44ad; }
+  .stat-card.gray    { border-color: #888; }
+  .stat-card.gray .val,    .stat-card.gray .lbl    { color: #888; }
+
+  .section-title {
+    display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px;
+    margin: 24px 0 14px;
+    font-size: 20px; font-weight: 800; color: #0d2b6e;
+    letter-spacing: 2px;
+    border-left: 5px solid #0d2b6e;
+    padding: 4px 12px;
+    background: white;
+    border-radius: 6px;
+  }
+  .section-title .badge { font-size: 12px; padding: 3px 12px; border-radius: 20px; font-weight: 600; margin-left: 10px; letter-spacing: 0.5px; }
+
+  .table-wrap { overflow-x: auto; }
+
+  .fund-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.07); font-size: 13px; }
+  .fund-table thead tr { background: linear-gradient(90deg, #0d2b6e, #1a5fac); color: white; }
+  .fund-table thead th { padding: 9px 5px; font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; letter-spacing: 0.3px; border-right: 1px solid rgba(255,255,255,0.15); }
+  .fund-table thead th:last-child { border-right: none; }
+  .fund-table thead th:nth-child(4) { background: rgba(255,255,255,0.25); border-bottom: 3px solid #f9e79f; }
+  .fund-table thead th:first-child { text-align: center; padding: 9px 2px; min-width: 32px; }
+  .fund-table tbody tr { border-bottom: 1px solid #f0f3f8; transition: all 0.2s ease; }
+  .fund-table tbody tr:last-child { border-bottom: none; }
+  .fund-table tbody tr:hover { background: #f6f9ff !important; }
+  .fund-table tbody tr.row-even { background: #fafbfe; }
+  .fund-table tbody tr.row-odd { background: #fff; }
+  .fund-table td { padding: 5px 4px; text-align: center; vertical-align: middle; border-right: 1px solid #f0f3f8; line-height: 1.5; white-space: nowrap; }
+  .fund-table td:first-child { text-align: center; padding: 5px 2px; border-right: none; }
+  .fund-table td:nth-child(2) { text-align: left; min-width: 140px; padding-left: 14px; }
+  .fund-table td:nth-child(2) a { color: #1a5fac; text-decoration: none; font-weight: 700; }
+  .fund-table td:nth-child(2) a:hover { text-decoration: underline; }
+  .fund-table td:nth-child(3) { text-align: left; min-width: 180px; }
+  /* 今年以来列高亮 */
+  .fund-table td:nth-child(4) { background: #fffdf5; font-weight: 700; border-left: 2px solid #e29a3b; }
+  .fund-table tbody tr:hover td:nth-child(4) { background: #fff9e6; }
+
+  .up { color: #e63946; }
+  .dn { color: #2ba84a; }
+  .neutral { color: #888; font-weight: 600; }
+
+  /* === 重仓股板块 === */
+  .holdings-section { margin-top: 20px; }
+  .holdings-table {
+    width: 100%; border-collapse: collapse; background: white;
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07); font-size: 13px;
+  }
+  .holdings-table thead tr { background: linear-gradient(90deg, #1a2035, #2c3e50); color: white; }
+  .holdings-table thead th { padding: 8px 10px; font-size: 11px; font-weight: 600; text-align: left; white-space: nowrap; }
+  .holdings-table tbody tr { border-bottom: 1px solid #f0f3f8; }
+  .holdings-table tbody tr:hover { background: #f6f9ff; }
+  .holdings-table td { padding: 8px 10px; vertical-align: middle; }
+  .stock-code { font-family: monospace; font-weight: 700; color: #1a5fac; width: 80px; }
+  .stock-name { font-weight: 600; width: 140px; }
+  .stock-freq { min-width: 140px; }
+  .stock-desc { font-size: 11px; color: #718097; line-height: 1.5; max-width: 340px; }
+  .freq-bar-wrap { display: inline-block; width: 80px; height: 8px; background: #f0f0f0; border-radius: 4px; vertical-align: middle; margin-right: 8px; }
+  .freq-bar-fill { height: 8px; border-radius: 4px; }
+  .freq-num { font-weight: 700; color: #1a2035; font-size: 13px; }
+
+  .page-footer { text-align: center; color: #aaa; font-size: 10px; padding: 16px; margin-top: 8px; }
+
+  @media (max-width: 1100px) { .fund-table { font-size: 10px; } .fund-table td:nth-child(3) { max-width: 140px; } }
+</style>
+</head>
+<body>
+  <script src="../assets/nav.js"></script>
+
+  <div class="page-header">
+    <div class="eyebrow">New High Report</div>
+    <h1>新高基金 &amp; 重仓股透视</h1>
+    <div class="subtitle">近1月净值创近1年新高的股票型+混合型基金（A类去重） · 按今年以来收益排序 · 含重仓股穿透分析</div>
+    <div class="update-time" id="update-time">加载中...</div>
+  </div>
+
+  <div class="main">
+    <div class="stats-row" id="stats">
+      <div class="stat-card blue"><div class="val" id="sum-funds">-</div><div class="lbl">新高基金</div></div>
+      <div class="stat-card purple"><div class="val" id="sum-stocks">-</div><div class="lbl">重仓股票(≥3次)</div></div>
+      <div class="stat-card orange"><div class="val" id="sum-boards">-</div><div class="lbl">覆盖板块</div></div>
+      <div class="stat-card gray"><div class="val" id="sum-date" style="font-size:14px;">-</div><div class="lbl">数据日期</div></div>
+    </div>
+
+    <div class="section-title">
+      基金排名
+      <span class="badge" style="background:#e8f0fe;color:#1a5fac" id="fund-count-badge">--只 · 按今年以来收益排序</span>
+    </div>
+
+    <div class="table-wrap">
+    <table class="fund-table">
+      <thead><tr>
+        <th>序号</th>
+        <th>代码</th>
+        <th>基金名称</th>
+        <th>今年以来</th>
+        <th>近1年收益</th>
+        <th>当前净值</th>
+        <th>新高日期</th>
+        <th>新高净值</th>
+        <th>距新高</th>
+      </tr></thead>
+      <tbody id="fund-tbody">
+        <tr><td colspan="9" style="text-align:center;color:#999;padding:20px;">数据加载中...</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div id="holdings"></div>
+
+  <div class="page-footer">
+    新高基金 &amp; 重仓股透视 · 数据来源：天天基金 · 涨跌颜色：中国A股惯例（涨红跌绿）
+  </div>
+
+  <script src="../data/new_high_funds.js"></script>
+  <script src="../data/holdings_analysis.js"></script>
+  <script src="../data/pe_ttm.js"></script>
+  <script>
+  (function() {
+    var funds = (typeof NEW_HIGH_FUNDS_DATA !== 'undefined') ? NEW_HIGH_FUNDS_DATA.funds : [];
+    var hdata = (typeof HOLDINGS_ANALYSIS_DATA !== 'undefined') ? HOLDINGS_ANALYSIS_DATA : {};
+
+    var dateStr = NEW_HIGH_FUNDS_DATA ? NEW_HIGH_FUNDS_DATA.date : (hdata.date || '-');
+    document.getElementById('update-time').innerHTML = '净值更新：' + dateStr + ' &nbsp;|&nbsp; 数据来源：天天基金 &nbsp;|&nbsp; 生成于 ' + dateStr;
+    document.getElementById('sum-date').textContent = dateStr;
+
+    document.getElementById('sum-funds').textContent = funds.length + '只';
+    document.getElementById('fund-count-badge').textContent = funds.length + '只 · 按今年以来收益排序';
+
+    // 基金表
+    var tbody = document.getElementById('fund-tbody');
+    var html = '';
+    for (var i = 0; i < funds.length; i++) {
+      var f = funds[i];
+      var ytd = f.ytd_return, yr = f.year_return, pct = f.pct_from_high;
+      var cls = (i % 2 === 0) ? 'row-even' : 'row-odd';
+      html += '<tr class="' + cls + '">';
+      html += '<td>' + (i+1) + '</td>';
+      html += '<td><a href="https://fund.eastmoney.com/' + f.code + '.html" target="_blank" rel="noopener">' + f.code + '</a></td>';
+      html += '<td>' + f.name + '</td>';
+      html += '<td class="' + (ytd >= 0 ? 'up' : 'dn') + '">' + (ytd >= 0 ? '+' : '') + ytd.toFixed(2) + '%</td>';
+      html += '<td class="' + (yr >= 0 ? 'up' : 'dn') + '">' + (yr >= 0 ? '+' : '') + yr.toFixed(2) + '%</td>';
+      html += '<td>' + f.cur_nav.toFixed(4) + '</td>';
+      html += '<td>' + f.high_date + '</td>';
+      html += '<td>' + f.high_nav.toFixed(4) + '</td>';
+      html += '<td class="' + (pct >= 0 ? 'up' : 'dn') + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%</td>';
+      html += '</tr>';
+    }
+    tbody.innerHTML = html;
+
+    // 持仓分析
+    var boards = [
+      { key: '主板', fillColor: '#1a5fac' },
+      { key: '创业板', fillColor: '#c0392b' },
+      { key: '科创板', fillColor: '#8e44ad' },
+      { key: '港股', fillColor: '#27ae60' }
+    ];
+    var container = document.getElementById('holdings');
+    var boardHtml = '';
+    var totalStocks = 0, activeBoards = 0;
+
+    for (var b = 0; b < boards.length; b++) {
+      var board = boards[b];
+      var stocks = hdata[board.key] || [];
+      if (!stocks.length) continue;
+      totalStocks += stocks.length;
+      activeBoards++;
+
+      var maxCount = 0;
+      for (var s = 0; s < stocks.length; s++) { if (stocks[s].count > maxCount) maxCount = stocks[s].count; }
+
+      var emojiMap = { '主板': '🏢', '创业板': '🔬', '科创板': '🚀', '港股': '🇭🇰' };
+      var label = emojiMap[board.key] + ' ' + board.key;
+
+      boardHtml += '<div class="main" style="padding-top:0;"><div class="section-title" style="justify-content:flex-start;">';
+      boardHtml += '<span style="color:' + board.fillColor + ';">' + label + '</span>';
+      boardHtml += '<span class="badge" style="background:#f6f9ff;color:' + board.fillColor + ';">' + stocks.length + '只 · 出现≥3次</span>';
+      boardHtml += '</div>';
+
+      boardHtml += '<table class="holdings-table"><thead><tr>';
+      boardHtml += '<th>股票名称</th><th>简介</th><th>频次</th><th>PE TTM</th>';
+      boardHtml += '</tr></thead><tbody>';
+
+      for (var s2 = 0; s2 < stocks.length; s2++) {
+        var st = stocks[s2];
+        var pctWidth = Math.round(st.count / maxCount * 100);
+        var pe = PE_TTM_DATA[st.code];
+        var peStr = pe ? pe.toFixed(2) : (pe === 0 ? '0.00' : 'N/A');
+        boardHtml += '<tr>';
+        boardHtml += '<td><span class="stock-name">' + st.name + '</span><br><span class="stock-code">' + st.code + '</span></td>';
+        boardHtml += '<td><span class="stock-desc">' + st.intro + '</span></td>';
+        boardHtml += '<td class="stock-freq"><span class="freq-bar-wrap"><span class="freq-bar-fill" style="width:' + pctWidth + 'px;background:' + board.fillColor + ';"></span></span><span class="freq-num">x' + st.count + '</span></td>';
+        boardHtml += '<td style="text-align:center;font-weight:700;font-size:14px;">' + peStr + '</td>';
+        boardHtml += '</tr>';
+      }
+      boardHtml += '</tbody></table></div>';
+    }
+    container.innerHTML = boardHtml;
+
+    document.getElementById('sum-stocks').textContent = totalStocks + '只';
+    document.getElementById('sum-boards').textContent = activeBoards + '个';
+  })();
+  </script>
+</body>
+</html>
