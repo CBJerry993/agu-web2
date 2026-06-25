@@ -110,6 +110,11 @@
     box-shadow: 0 12px 28px rgba(13, 43, 110, 0.28);
   }
 
+  .strategy-icon.stable {
+    background: linear-gradient(135deg, #1a7a3a, #27ae60);
+    box-shadow: 0 12px 28px rgba(26, 122, 58, 0.28);
+  }
+
   .strategy-body h3 {
     margin: 0 0 4px;
     font-size: 22px;
@@ -345,19 +350,80 @@
       </div>
     </div>
 
+    <!-- 策略 #2: ETF轮动-稳健 -->
+    <div class="strategy-block">
+      <div class="strategy-card">
+        <div class="strategy-icon stable">S</div>
+
+        <div class="strategy-body">
+          <h3>ETF轮动-稳健</h3>
+          <div class="strategy-meta">
+            <span class="platform-badge jq">JoinQuant 聚宽</span>
+            <span class="tag">ETF轮动</span>
+            <span class="tag">稳健配置</span>
+          </div>
+          <p class="strategy-desc">
+            在红利、黄金、纳斯达克三个品种之间根据趋势轮动进行动态配置，以稳定增长为目标平衡收益与回撤。
+          </p>
+          <div class="run-stats">
+            <span class="run-stat"><span class="rs-label">开始运行</span>2023-12-29</span>
+            <span class="run-stat"><span class="rs-label">已运行</span><span id="runDays2">—</span> 天</span>
+          </div>
+        </div>
+
+        <div class="strategy-actions">
+          <a class="btn-live"
+             href="https://www.joinquant.com/algorithm/live/liveUrlShareIndex?backtestId=aedf11f4cb5faa765eaecb7718d2c030"
+             target="_blank" rel="noopener">
+            <span class="pulse"></span> 查看实时运行
+          </a>
+          <span class="pwd-hint">
+            查看密码 <code onclick="navigator.clipboard.writeText('awa1uu')" title="点击复制">awa1uu</code>
+          </span>
+        </div>
+      </div>
+
+      <div class="collapsible-block" id="backtestSection2">
+        <button class="collapsible-toggle" onclick="toggleCollapse('backtestSection2')">
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+            <div>
+              <span style="display:flex;align-items:center;gap:12px;font-size:15px;font-weight:700;color:#0d2b6e;">
+                <span style="width:4px;height:18px;background:#0d2b6e;border-radius:2px;flex-shrink:0;"></span>
+                策略运行情况
+              </span>
+              <span style="font-size:13px;color:var(--muted);margin-left:16px;">图中并非最新数据，如需查看请点击上方【查看实时运行按钮】</span>
+            </div>
+            <span class="collapsible-icon">▾</span>
+          </div>
+        </button>
+        <div class="collapsible-content">
+          <div class="collapsible-inner">
+            <img class="backtest-image" src="../assets/quant_strategy_preview2.png" alt="ETF轮动-稳健 回测收益曲线">
+            <div class="collapsible-note">
+              <strong>提示：</strong>策略链接有时效性，如无法访问请在聚宽平台重新分享。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </main>
 
 <script>
-function toggleCollapse() {
-  document.getElementById('backtestSection').classList.toggle('open');
+function toggleCollapse(id) {
+  document.getElementById(id).classList.toggle('open');
 }
 // 自动计算已运行天数
 (function() {
-  var start = new Date(2023, 10, 29); // 2023-11-29
-  var days = Math.floor((new Date() - start) / 86400000);
-  document.getElementById('runDays').textContent = days;
+  var start1 = new Date(2023, 10, 29); // 2023-11-29
+  var days1 = Math.floor((new Date() - start1) / 86400000);
+  document.getElementById('runDays').textContent = days1;
+
+  var start2 = new Date(2023, 11, 29); // 2023-12-29
+  var days2 = Math.floor((new Date() - start2) / 86400000);
+  document.getElementById('runDays2').textContent = days2;
 })();
 </script>
 </body>
