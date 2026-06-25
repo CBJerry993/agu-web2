@@ -57,46 +57,82 @@
   }
 
   .tab-panel.active {
-    display: block;
+    display: flex;
+    gap: 16px;
   }
 
-  .sub-section {
+  .panel-sidebar {
+    width: 120px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .side-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 6px;
+    background: white;
+    color: #555;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: all 0.2s;
+  }
+
+  .side-btn:hover {
+    background: #f6f9ff;
+    color: #1a5fac;
+  }
+
+  .side-btn.active {
+    background: #1a5fac;
+    color: #fff;
+    font-weight: 800;
+  }
+
+  .side-btn .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .side-btn.stock .dot { background: #1a5fac; }
+  .side-btn.long .dot  { background: #c0392b; }
+  .side-btn.short .dot { background: #27ae60; }
+
+  .side-btn.active .dot { background: #fff; }
+
+  .side-count {
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.7;
+  }
+
+  .panel-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .panel-content > div {
+    display: none;
     background: white;
     border-radius: 10px;
     padding: 18px 22px 10px;
-    margin-bottom: 16px;
     box-shadow: 0 1px 6px rgba(0,0,0,0.07);
     border-top: 3px solid;
   }
 
-  .sub-section.stock { border-color: #1a5fac; }
-  .sub-section.long  { border-color: #c0392b; }
-  .sub-section.short { border-color: #27ae60; }
-
-  .sub-head {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-    font-size: 15px;
-    font-weight: 800;
-  }
-
-  .sub-head .dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-  }
-
-  .sub-head.stock .dot { background: #1a5fac; }
-  .sub-head.long .dot  { background: #c0392b; }
-  .sub-head.short .dot { background: #27ae60; }
-
-  .sub-count {
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--muted);
-    margin-left: 4px;
-  }
+  .panel-content > div.active { display: block; }
+  .panel-content > div.stock { border-color: #1a5fac; }
+  .panel-content > div.long  { border-color: #c0392b; }
+  .panel-content > div.short { border-color: #27ae60; }
 
   .etf-table {
     width: 100%;
@@ -192,7 +228,10 @@
   @media (max-width: 700px) {
     .tab-bar { flex-wrap: wrap; }
     .tab-btn { min-width: 80px; font-size: 12px; padding: 12px 6px; }
-    .sub-section { padding: 12px 14px 8px; }
+    .tab-panel.active { flex-direction: column; }
+    .panel-sidebar { width: 100%; flex-direction: row; gap: 6px; }
+    .side-btn { padding: 10px 12px; font-size: 12px; }
+    .panel-content > div { padding: 12px 10px 6px; }
     .etf-table { font-size: 12px; }
   }
 </style>
@@ -411,23 +450,21 @@ function renderTable(items, type) {
 }
 
 function renderPanel(g) {
-  var html = '';
-  if (g.stock && g.stock.length) {
-    html += '<div class="sub-section stock">' +
-      '<div class="sub-head stock"><span class="dot"></span>正股<span class="sub-count">' + g.stock.length + ' 个</span></div>' +
-      '<table class="etf-table">' + renderTable(g.stock, 'stock') + '</table></div>';
-  }
-  if (g.long && g.long.length) {
-    html += '<div class="sub-section long">' +
-      '<div class="sub-head long"><span class="dot"></span>做多ETF<span class="sub-count">' + g.long.length + ' 个</span></div>' +
-      '<table class="etf-table">' + renderTable(g.long, 'long') + '</table></div>';
-  }
-  if (g.short && g.short.length) {
-    html += '<div class="sub-section short">' +
-      '<div class="sub-head short"><span class="dot"></span>做空ETF<span class="sub-count">' + g.short.length + ' 个</span></div>' +
-      '<table class="etf-table">' + renderTable(g.short, 'short') + '</table></div>';
-  }
-  return html;
+  var stock = g.stock && g.stock.length ? '<div class="stock active"><table class="etf-table">' + renderTable(g.stock, 'stock') + '</table></div>' : '';
+  var long  = g.long && g.long.length   ? '<div class="long"><table class="etf-table">'  + renderTable(g.long, 'long')   + '</table></div>' : '';
+  var short = g.short && g.short.length ? '<div class="short"><table class="etf-table">' + renderTable(g.short, 'short') + '</table></div>' : '';
+
+  var stockCount = g.stock ? g.stock.length : 0;
+  var longCount  = g.long  ? g.long.length  : 0;
+  var shortCount = g.short ? g.short.length : 0;
+
+  var sidebar = '<div class="panel-sidebar">';
+  if (stock) sidebar += '<button class="side-btn stock active" onclick="switchSub(this,' + WATCH_DATA.indexOf(g) + ',\'stock\')"><span class="dot"></span>正股<span class="side-count">' + stockCount + '</span></button>';
+  if (long)  sidebar += '<button class="side-btn long" onclick="switchSub(this,' + WATCH_DATA.indexOf(g) + ',\'long\')"><span class="dot"></span>做多ETF<span class="side-count">' + longCount + '</span></button>';
+  if (short) sidebar += '<button class="side-btn short" onclick="switchSub(this,' + WATCH_DATA.indexOf(g) + ',\'short\')"><span class="dot"></span>做空ETF<span class="side-count">' + shortCount + '</span></button>';
+  sidebar += '</div>';
+
+  return sidebar + '<div class="panel-content" id="panelContent' + WATCH_DATA.indexOf(g) + '">' + stock + long + short + '</div>';
 }
 
 // 渲染 tab 栏
@@ -451,6 +488,24 @@ window.switchTab = function(idx) {
   var panels = document.querySelectorAll('.tab-panel');
   btns.forEach(function(b, i) { b.classList.toggle('active', i === idx); });
   panels.forEach(function(p, i) { p.classList.toggle('active', i === idx); });
+  // 重置子标签为第一个
+  var panel = panels[idx];
+  if (panel) {
+    var firstSideBtn = panel.querySelector('.side-btn');
+    if (firstSideBtn) firstSideBtn.click();
+  }
+};
+
+// 切换子标签
+window.switchSub = function(btn, panelIdx, type) {
+  // 更新 sidebar 激活态
+  var sidebar = btn.parentElement;
+  sidebar.querySelectorAll('.side-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  // 更新内容区
+  var content = document.getElementById('panelContent' + panelIdx);
+  content.querySelectorAll('div').forEach(function(d) { d.classList.remove('active'); });
+  content.querySelector('div.' + type).classList.add('active');
 };
 
 // 默认选中第一个
