@@ -13,6 +13,7 @@
     { label: '新高',       href: prefix + '/pages/new_high.html',                       id: 'new_high' },
     { label: '持仓',       href: prefix + '/pages/holding.html',                        id: 'holding' },
     { label: '量化',       href: prefix + '/pages/quant_strategy.html',               id: 'quant_strategy' },
+    { label: '港美股',     href: prefix + '/pages/market_watch.html',                 id: 'market_watch' },
     { label: '观点',       href: prefix + '/pages/wu2198.html',                       id: 'wu2198' },
     { label: '免责',       href: prefix + '/index.html#disclaimer',                     id: 'disclaimer' }
   ];

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>港美股行情 - 基金观察台</title>
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  .watch-grid { display: grid; gap: 14px; }
+
+  .watch-block {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+  }
+
+  .watch-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 28px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .watch-toggle:hover { background: #f8fafc; }
+
+  .watch-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0d2b6e;
+  }
+
+  .watch-title::before {
+    content: '';
+    width: 4px; height: 20px;
+    background: #0d2b6e; border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .watch-count {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .watch-arrow {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #eef2f7;
+    color: #0d2b6e;
+    display: grid; place-items: center;
+    font-size: 14px;
+    transition: transform 0.3s;
+  }
+
+  .watch-block.open .watch-arrow { transform: rotate(180deg); }
+
+  .watch-content {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+
+  .watch-block.open .watch-content { max-height: 4000px; }
+
+  .watch-inner { padding: 0 28px 24px; }
+
+  .sub-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 18px 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #222;
+  }
+
+  .sub-label .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .sub-label .dot.stock { background: #1a5fac; }
+  .sub-label .dot.long  { background: #c0392b; }
+  .sub-label .dot.short { background: #27ae60; }
+
+  .etf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .etf-table thead th {
+    background: #f0f3f8;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .etf-table thead th:first-child { padding-left: 16px; }
+  .etf-table thead th:last-child { padding-right: 16px; }
+
+  .etf-table tbody td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f3f8;
+    vertical-align: middle;
+  }
+
+  .etf-table tbody td:first-child { padding-left: 16px; }
+  .etf-table tbody td:last-child { padding-right: 16px; }
+
+  .etf-table tbody tr:hover { background: #f8fafc; }
+
+  .code-link {
+    color: #1a5fac;
+    text-decoration: none;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 13px;
+  }
+
+  .code-link:hover { text-decoration: underline; }
+
+  .lev-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .lev-badge.long  { background: #fde8e8; color: #c0392b; }
+  .lev-badge.short { background: #e8f5e9; color: #27ae60; }
+  .lev-badge.lev1  { background: #eff4fd; color: #1a5fac; }
+
+  .dir-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .dir-tag.long  { background: #fde8e8; color: #c0392b; }
+  .dir-tag.short { background: #e8f5e9; color: #27ae60; }
+
+  @media (max-width: 700px) {
+    .watch-toggle { padding: 14px 16px; }
+    .watch-inner { padding: 0 16px 20px; }
+    .etf-table { font-size: 12px; }
+    .etf-table thead th, .etf-table tbody td { padding: 6px 8px; }
+  }
+</style>
+</head>
+<body>
+<script src="../assets/nav.js"></script>
+
+<main class="report-shell">
+  <section class="report-heading">
+    <div>
+      <p class="eyebrow">Market Watch</p>
+      <h1>港美股行情</h1>
+      <p>美股热门指数、个股杠杆ETF &amp; 港股杠杆品种，代码链接雪球查看实时行情</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:4px">更新于 2026-06-25</p>
+    </div>
+  </section>
+
+  <div class="watch-grid" id="watchGrid"></div>
+
+</main>
+
+<script>
+// ============ 数据定义 ============
+var WATCH_DATA = [
+
+  // ===== 1. 美股主要指数 =====
+  {
+    title: '美股主要指数',
+    stock: [
+      { name: '标普500指数', code: '.INX', note: '基准' },
+      { name: '纳斯达克100指数', code: '.NDX', note: '基准' },
+      { name: '道琼斯工业指数', code: '.DJI', note: '基准' }
+    ],
+    long: [
+      { name: '标普500ETF', code: 'SPY', lev: '1x' },
+      { name: '标普500ETF-Vanguard', code: 'VOO', lev: '1x' },
+      { name: '两倍做多标普500', code: 'SSO', lev: '2x' },
+      { name: '三倍做多标普500', code: 'UPRO', lev: '3x' },
+      { name: '纳指100ETF', code: 'QQQ', lev: '1x' },
+      { name: '两倍做多纳指100', code: 'QLD', lev: '2x' },
+      { name: '三倍做多纳指100', code: 'TQQQ', lev: '3x' },
+      { name: '道指ETF', code: 'DIA', lev: '1x' },
+      { name: '三倍做多道指', code: 'UDOW', lev: '3x' }
+    ],
+    short: [
+      { name: '标普500反向ETF', code: 'SH', lev: '-1x' },
+      { name: '两倍做空标普500', code: 'SDS', lev: '-2x' },
+      { name: '三倍做空标普500', code: 'SPXU', lev: '-3x' },
+      { name: '纳指100反向ETF', code: 'PSQ', lev: '-1x' },
+      { name: '两倍做空纳指100', code: 'QID', lev: '-2x' },
+      { name: '三倍做空纳指100', code: 'SQQQ', lev: '-3x' },
+      { name: '道指反向ETF', code: 'DOG', lev: '-1x' },
+      { name: '三倍做空道指', code: 'SDOW', lev: '-3x' }
+    ]
+  },
+
+  // ===== 2. 美股七巨头 =====
+  {
+    title: '美股七巨头',
+    stock: [
+      { name: '英伟达', code: 'NVDA', note: 'GPU/AI芯片龙头' },
+      { name: '苹果', code: 'AAPL', note: '消费电子龙头' },
+      { name: '微软', code: 'MSFT', note: '云计算+AI' },
+      { name: '谷歌', code: 'GOOG', note: '搜索+AI' },
+      { name: '亚马逊', code: 'AMZN', note: '电商+云计算' },
+      { name: 'Meta', code: 'META', note: '社交+AI' },
+      { name: '特斯拉', code: 'TSLA', note: '电动车+AI' }
+    ],
+    long: [
+      { name: '2倍做多英伟达', code: 'NVDL', lev: '2x' },
+      { name: '2倍做多苹果', code: 'AAPU', lev: '2x' },
+      { name: '2倍做多微软', code: 'MSFU', lev: '2x' },
+      { name: '2倍做多谷歌', code: 'GGLL', lev: '2x' },
+      { name: '2倍做多亚马逊', code: 'AMZU', lev: '2x' },
+      { name: '2倍做多Meta', code: 'FBL', lev: '2x' },
+      { name: '2倍做多特斯拉', code: 'TSLL', lev: '2x' }
+    ],
+    short: [
+      { name: '2倍做空英伟达', code: 'NVD', lev: '-2x' },
+      { name: '1倍做空苹果', code: 'AAPD', lev: '-1x' },
+      { name: '1倍做空微软', code: 'MSFD', lev: '-1x' },
+      { name: '1倍做空谷歌', code: 'GGLS', lev: '-1x' },
+      { name: '1倍做空亚马逊', code: 'AMZD', lev: '-1x' },
+      { name: '1倍做空Meta', code: 'METD', lev: '-1x' },
+      { name: '1倍做空特斯拉', code: 'TSLS', lev: '-1x' }
+    ]
+  },
+
+  // ===== 3. 中国市场相关 =====
+  {
+    title: '中国市场相关',
+    stock: [
+      { name: '沪深300指数', code: 'SH000300', note: 'A股基准' },
+      { name: '恒生指数', code: 'HSI', note: '港股基准' },
+      { name: '恒生科技指数', code: 'HSTECH', note: '港股科技' }
+    ],
+    long: [
+      { name: 'iShares中国大盘股ETF', code: 'FXI', lev: '1x' },
+      { name: '3倍做多富时中国50', code: 'YINN', lev: '3x' }
+    ],
+    short: [
+      { name: '富时中国25反向ETF', code: 'YXI', lev: '-1x' },
+      { name: '3倍做空富时中国50', code: 'YANG', lev: '-3x' }
+    ]
+  },
+
+  // ===== 4. 港股市场 =====
+  {
+    title: '港股市场',
+    stock: [
+      { name: '盈富基金(恒指)', code: '02800', note: '港股旗舰ETF' },
+      { name: '恒生中国企业ETF', code: '02828', note: 'H股ETF' },
+      { name: '南方A50', code: '02822', note: 'A股ETF' },
+      { name: '恒生科技ETF', code: '03033', note: '恒科1x' },
+      { name: '腾讯控股', code: '00700', note: '港股' },
+      { name: '美团', code: '03690', note: '港股' }
+    ],
+    long: [
+      { name: '两倍做多恒指', code: '07200', lev: '2x' },
+      { name: '两倍做多恒科', code: '07226', lev: '2x' },
+      { name: '两倍做多国指', code: '07288', lev: '2x' },
+      { name: '两倍做多沪深300', code: '07233', lev: '2x' },
+      { name: '两倍做多海力士', code: '07709', lev: '2x' },
+      { name: '两倍做多三星电子', code: '09747', lev: '2x' }
+    ],
+    short: [
+      { name: '一倍做空恒指', code: '07300', lev: '-1x' },
+      { name: '两倍做空恒指', code: '07500', lev: '-2x' },
+      { name: '两倍做空恒科', code: '07552', lev: '-2x' },
+      { name: '两倍做空国指', code: '07588', lev: '-2x' },
+      { name: '两倍做空沪深300', code: '07582', lev: '-2x' }
+    ]
+  },
+
+  // ===== 5. 大宗商品 =====
+  {
+    title: '大宗商品',
+    stock: [
+      { name: '美国原油ETF', code: 'USO', note: '追踪WTI' },
+      { name: 'SPDR黄金ETF', code: 'GLD', note: '追踪金价' }
+    ],
+    long: [
+      { name: '美国原油ETF', code: 'USO', lev: '1x' },
+      { name: '两倍做多原油', code: 'UCO', lev: '2x' },
+      { name: 'SPDR黄金ETF', code: 'GLD', lev: '1x' },
+      { name: '两倍做多黄金', code: 'UGL', lev: '2x' },
+      { name: '南方两倍做多黄金', code: '07299', lev: '2x' }
+    ],
+    short: [
+      { name: '两倍做空原油', code: 'SCO', lev: '-2x' },
+      { name: '黄金一倍做空', code: 'DGZ', lev: '-1x' },
+      { name: '两倍做空黄金', code: 'GLL', lev: '-2x' }
+    ]
+  },
+
+  // ===== 6. 外汇与波动率 =====
+  {
+    title: '外汇与波动率',
+    stock: [],
+    long: [
+      { name: 'DB美元做多ETF', code: 'UUP', lev: '1x' },
+      { name: '两倍做多恐慌指数', code: 'UVXY', lev: '2x' }
+    ],
+    short: [
+      { name: 'DB美元做空ETF', code: 'UDN', lev: '-1x' },
+      { name: '两倍做空恐慌指数', code: 'SVXY', lev: '-2x' }
+    ]
+  },
+
+  // ===== 7. 其他市场 =====
+  {
+    title: '其他市场',
+    stock: [],
+    long: [
+      { name: 'iShares MSCI日本', code: 'EWJ', lev: '1x' },
+      { name: '两倍做多日本', code: 'EZJ', lev: '2x' },
+      { name: 'Vanguard FTSE欧洲', code: 'VGK', lev: '1x' },
+      { name: '三倍做多欧洲', code: 'EURL', lev: '3x' },
+      { name: 'VanEck越南', code: 'VNM', lev: '1x' }
+    ],
+    short: [
+      { name: '两倍做空日本', code: 'EWV', lev: '-2x' },
+      { name: '两倍做空欧洲', code: 'EPV', lev: '-2x' }
+    ]
+  }
+];
+
+// ============ 渲染 ============
+function levClass(lev) {
+  if (lev.startsWith('-')) return 'short';
+  if (lev === '1x') return 'lev1';
+  return 'long';
+}
+
+function dirLabel(lev) {
+  return lev.startsWith('-') ? '做空' : '做多';
+}
+
+function renderTable(items, type) {
+  if (!items || !items.length) return '';
+  var cls = type === 'long' ? 'long' : type === 'short' ? 'short' : '';
+  var rows = items.map(function(it) {
+    return '<tr>' +
+      '<td>' + it.name + (it.note ? ' <span style="font-size:11px;color:var(--muted)">' + it.note + '</span>' : '') + '</td>' +
+      '<td><a class="code-link" href="https://xueqiu.com/S/' + it.code + '" target="_blank" rel="noopener">' + it.code + '</a></td>' +
+      (type === 'stock'
+        ? '<td></td>'
+        : '<td><span class="dir-tag ' + cls + '">' + dirLabel(it.lev) + '</span> <span class="lev-badge ' + levClass(it.lev) + '">' + it.lev + '</span></td>') +
+      '</tr>';
+  }).join('');
+
+  var headers = type === 'stock'
+    ? '<thead><tr><th>名称</th><th>代码</th><th></th></tr></thead>'
+    : '<thead><tr><th>名称</th><th>代码</th><th>方向/杠杆</th></tr></thead>';
+
+  return headers + '<tbody>' + rows + '</tbody>';
+}
+
+function renderGroup(g) {
+  var dotStock = g.stock && g.stock.length
+    ? '<div class="sub-label"><span class="dot stock"></span>正股<span style="font-weight:400;color:var(--muted);margin-left:4px">' + g.stock.length + ' 个</span></div>' +
+      '<table class="etf-table">' + renderTable(g.stock, 'stock') + '</table>'
+    : '';
+
+  var dotLong = g.long && g.long.length
+    ? '<div class="sub-label"><span class="dot long"></span>做多ETF<span style="font-weight:400;color:var(--muted);margin-left:4px">' + g.long.length + ' 个</span></div>' +
+      '<table class="etf-table">' + renderTable(g.long, 'long') + '</table>'
+    : '';
+
+  var dotShort = g.short && g.short.length
+    ? '<div class="sub-label"><span class="dot short"></span>做空ETF<span style="font-weight:400;color:var(--muted);margin-left:4px">' + g.short.length + ' 个</span></div>' +
+      '<table class="etf-table">' + renderTable(g.short, 'short') + '</table>'
+    : '';
+
+  var total = (g.stock ? g.stock.length : 0) + (g.long ? g.long.length : 0) + (g.short ? g.short.length : 0);
+
+  return '<div class="watch-block" id="group' + WATCH_DATA.indexOf(g) + '">' +
+    '<button class="watch-toggle" onclick="this.parentElement.classList.toggle(\'open\')">' +
+      '<span class="watch-title">' + g.title + '</span>' +
+      '<span style="display:flex;align-items:center;gap:12px;">' +
+        '<span class="watch-count">' + total + ' 只</span>' +
+        '<span class="watch-arrow">▾</span>' +
+      '</span>' +
+    '</button>' +
+    '<div class="watch-content"><div class="watch-inner">' +
+      dotStock + dotLong + dotShort +
+    '</div></div>' +
+  '</div>';
+}
+
+document.getElementById('watchGrid').innerHTML = WATCH_DATA.map(renderGroup).join('');
+
+// 默认展开前两组
+(function() {
+  var blocks = document.querySelectorAll('.watch-block');
+  if (blocks[0]) blocks[0].classList.add('open');
+  if (blocks[1]) blocks[1].classList.add('open');
+})();
+</script>
+</body>
+</html>
