@@ -228,17 +228,26 @@ fetch('qdii_data.json', {cache: 'no-cache'})
             td.style.fontWeight = '600';
             td.style.fontSize = '13px';
             td.textContent = pe.toFixed(2);
-            parent.appendChild(td);
+            // 插入到 stock-name 后面（即简介列之前）
+            if (cell.nextSibling) {
+              parent.insertBefore(td, cell.nextSibling);
+            } else {
+              parent.appendChild(td);
+            }
           }
         });
-        // 添加表头"PE TTM"
+        // 添加表头"PE TTM"到简称后面
         var thead = document.querySelector('#holdings .holdings-table thead tr');
         if (thead) {
           var th = document.createElement('th');
           th.textContent = 'PE TTM';
           th.style.textAlign = 'center';
-          th.style.width = '72px';
-          thead.appendChild(th);
+          var nameTh = thead.querySelector('th:nth-child(2)');
+          if (nameTh && nameTh.nextSibling) {
+            thead.insertBefore(th, nameTh.nextSibling);
+          } else {
+            thead.appendChild(th);
+          }
         }
       }
     }
