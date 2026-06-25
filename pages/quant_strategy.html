@@ -186,6 +186,31 @@
     letter-spacing: 0.5px;
   }
 
+  .key-metrics {
+    display: flex;
+    gap: 28px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .metric-val {
+    font-size: 17px;
+    font-weight: 700;
+    color: #222;
+  }
+
+  .metric-lbl {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
   .strategy-actions {
     display: flex;
     flex-direction: column;
@@ -307,6 +332,12 @@
           <p class="strategy-desc">
             基于ETF动量轮动的激进型策略，在多个ETF之间动态切换，捕捉强势品种的阶段性收益。
           </p>
+          <div class="key-metrics">
+            <div class="metric-item"><span class="metric-val">20%-30%</span><span class="metric-lbl">预期年化</span></div>
+            <div class="metric-item"><span class="metric-val">1</span><span class="metric-lbl">最大持仓</span></div>
+            <div class="metric-item"><span class="metric-val">2.8 次</span><span class="metric-lbl">月均交易</span></div>
+            <div class="metric-item"><span class="metric-val">20%</span><span class="metric-lbl">预期最大回撤</span></div>
+          </div>
           <div class="run-stats">
             <span class="run-stat"><span class="rs-label">开始运行</span>2023-11-29</span>
             <span class="run-stat"><span class="rs-label">已运行</span><span id="runDays">—</span> 天</span>
@@ -365,6 +396,12 @@
           <p class="strategy-desc">
             在红利、黄金、纳斯达克三个品种之间根据趋势轮动进行动态配置，以稳定增长为目标平衡收益与回撤。
           </p>
+          <div class="key-metrics">
+            <div class="metric-item"><span class="metric-val">20%</span><span class="metric-lbl">预期年化</span></div>
+            <div class="metric-item"><span class="metric-val">3</span><span class="metric-lbl">最大持仓</span></div>
+            <div class="metric-item"><span class="metric-val">1.8 次</span><span class="metric-lbl">月均交易</span></div>
+            <div class="metric-item"><span class="metric-val">9%</span><span class="metric-lbl">预期最大回撤</span></div>
+          </div>
           <div class="run-stats">
             <span class="run-stat"><span class="rs-label">开始运行</span>2023-12-29</span>
             <span class="run-stat"><span class="rs-label">已运行</span><span id="runDays2">—</span> 天</span>
