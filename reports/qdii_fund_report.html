@@ -189,6 +189,7 @@
   QDII海外基金收益排行 · 数据来源：天天基金 · 排名来源：天天基金同类排名 · 涨跌颜色：中国A股惯例（涨红跌绿）
 </div>
 
+<script src="../data/pe_ttm_qdii.js"></script>
 <script>
 fetch('qdii_data.json', {cache: 'no-cache'})
   .then(r => {
@@ -212,6 +213,34 @@ fetch('qdii_data.json', {cache: 'no-cache'})
     // 美股持仓
     if (data.holdingsHtml) {
       document.getElementById('holdings').innerHTML = data.holdingsHtml;
+      // 注入PE TTM
+      if (typeof PE_TTM_QDII !== 'undefined') {
+        var stockCells = document.querySelectorAll('#holdings .stock-name');
+        stockCells.forEach(function(cell) {
+          var parent = cell.parentElement;
+          var codeCell = parent.querySelector('.stock-code');
+          if (!codeCell) return;
+          var code = codeCell.textContent.trim();
+          var pe = PE_TTM_QDII[code];
+          if (pe !== undefined) {
+            var td = document.createElement('td');
+            td.style.textAlign = 'center';
+            td.style.fontWeight = '600';
+            td.style.fontSize = '13px';
+            td.textContent = pe.toFixed(2);
+            parent.appendChild(td);
+          }
+        });
+        // 添加表头"PE TTM"
+        var thead = document.querySelector('#holdings .holdings-table thead tr');
+        if (thead) {
+          var th = document.createElement('th');
+          th.textContent = 'PE TTM';
+          th.style.textAlign = 'center';
+          th.style.width = '72px';
+          thead.appendChild(th);
+        }
+      }
     }
 
     // 更新页面标题
