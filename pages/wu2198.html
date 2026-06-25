@@ -193,85 +193,342 @@
   }
 
   .page-footer { text-align: center; color: #aaa; font-size: 11px; padding: 20px; margin-top: 8px; }
+
+  /* ========== 登录验证层 ========== */
+  .login-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(7, 20, 37, 0.75);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-overlay.hidden { display: none; }
+  .login-card {
+    background: #fff; border-radius: 12px;
+    padding: 36px 32px 28px; width: 420px; max-width: 96vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;
+  }
+  .login-card h2 { margin: 0 0 4px; font-size: 22px; color: var(--ink); }
+  .login-card .sub { margin: 0 0 20px; font-size: 13px; color: var(--muted); }
+  .login-card input {
+    width: 100%; padding: 10px 14px; margin-bottom: 12px;
+    border: 1px solid #dcdfe6; border-radius: 6px;
+    font-size: 14px; outline: none; transition: border-color 0.2s;
+  }
+  .login-card input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(27,103,201,0.1);
+  }
+  .puzzle-box {
+    position: relative; width: 100%; height: 150px;
+    margin: 16px 0 12px; background: #f5f7fa;
+    border-radius: 6px; overflow: hidden; border: 1px solid #e4e7ed;
+  }
+  .puzzle-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    filter: brightness(0.9);
+  }
+  .puzzle-hole {
+    position: absolute; width: 42px; height: 42px;
+    background: rgba(0,0,0,0.35); border: 2px dashed rgba(255,255,255,0.6);
+    border-radius: 4px; z-index: 1;
+  }
+  .puzzle-piece {
+    position: absolute; width: 42px; height: 42px;
+    border-radius: 4px; cursor: grab; z-index: 2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.4);
+  }
+  .puzzle-piece:active { cursor: grabbing; }
+  .puzzle-piece.verified {
+    border-color: #67c23a;
+    box-shadow: 0 0 0 3px rgba(103,194,58,0.3);
+  }
+  .slider-track-wrap {
+    position: relative; width: 100%; height: 36px;
+    margin: 12px 0 16px; background: #e4e7ed;
+    border-radius: 18px; overflow: hidden;
+  }
+  .slider-fill {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+    background: linear-gradient(90deg, #c6e0ff, #a8d1ff);
+    border-radius: 18px 0 0 18px; transition: width 0.1s linear;
+  }
+  .slider-thumb {
+    position: absolute; left: 2px; top: 2px;
+    width: 32px; height: 32px; background: #fff;
+    border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    cursor: grab; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--blue); z-index: 2;
+    transition: background 0.3s;
+  }
+  .slider-thumb:active { cursor: grabbing; }
+  .slider-thumb.verified { background: #67c23a; color: #fff; }
+  .slider-text {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #909399; pointer-events: none;
+  }
+  .login-btn {
+    width: 100%; padding: 11px 0; border: none; border-radius: 6px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    background: #c0c4cc; color: #fff; transition: background 0.25s;
+  }
+  .login-btn.ready { background: var(--blue); }
+  .login-btn.ready:hover { background: #1659ad; }
+  .login-err { margin-top: 10px; font-size: 13px; color: var(--red); min-height: 20px; }
+  .puzzle-tip { font-size: 12px; color: #909399; margin-bottom: 8px; }
 </style>
 </head>
 <body>
-  <script src="../assets/nav.js"></script>
-
-  <main class="main">
-    <!-- report-heading -->
-    <section class="report-heading">
-      <div>
-        <p class="eyebrow">Opinion Tracker</p>
-        <h1>wu2198 投资观点追踪</h1>
-        <p class="desc">
-          追踪微博博主 <strong>wu2198</strong>（粉丝50万+）的投资市场观点。
-          分类：<span style="color:#1976d2">美股</span> ·
-          <span style="color:#c62828">港股</span> ·
-          <span style="color:#e65100">A股点位</span> ·
-          <span style="color:#2e7d32">A股板块</span> ·
-          <span style="color:#f9a825">黄金</span> ·
-          <span style="color:#6a1b9a">其他投资观点</span>
-        </p>
-        <p class="date-line" id="date-line">数据截至 ——，共收录 N 条观点</p>
+  <!-- ========== 登录验证层 ========== -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+      <h2>🔒 观点追踪</h2>
+      <p class="sub">请输入账号密码并完成拼图验证</p>
+      <input type="text" id="user-input" placeholder="账号" autocomplete="off">
+      <input type="password" id="pass-input" placeholder="密码" autocomplete="off">
+      <p class="puzzle-tip">拖动滑块，将拼图块移动到虚线框内</p>
+      <div class="puzzle-box" id="puzzle-box">
+        <div class="puzzle-bg" id="puzzle-bg"></div>
+        <div class="puzzle-hole" id="puzzle-hole"></div>
+        <div class="puzzle-piece" id="puzzle-piece"></div>
       </div>
-    </section>
-
-    <!-- 分类筛选 -->
-    <div class="filter-bar">
-      <span class="filter-label">分类筛选</span>
-      <span class="filter-pill active" data-cat="all" onclick="filterBy('all')">全部</span>
+      <div class="slider-track-wrap" id="slider-track">
+        <div class="slider-fill" id="slider-fill"></div>
+        <div class="slider-text" id="slider-text">→ 拖动滑块完成拼图</div>
+        <div class="slider-thumb" id="slider-thumb">≡</div>
+      </div>
+      <button id="login-btn" class="login-btn" disabled>验 证</button>
+      <div class="login-err" id="login-err"></div>
     </div>
+  </div>
 
-    <!-- ========== 观点总结 ========== -->
-    <!-- 1. 关键点位 -->
-    <section class="summary-card" id="levels-card">
-      <h2>🎯 关键点位 <span class="hint">支撑 / 阻力 / 收盘</span></h2>
-      <div id="levels-content"></div>
-    </section>
+  <!-- ========== 页面主体 ========== -->
+  <div id="main-content" style="display:none">
+    <script src="../assets/nav.js"></script>
 
-    <!-- 2. 热门观点 -->
-    <section class="summary-card" id="hot-card">
-      <h2>🔥 热门观点 <span class="hint">点击标题查看原文</span></h2>
-      <div id="hot-content"></div>
-    </section>
+    <main class="main">
+      <section class="report-heading">
+        <div>
+          <p class="eyebrow">Opinion Tracker</p>
+          <h1>wu2198 投资观点追踪</h1>
+          <p class="desc">
+            追踪微博博主 <strong>wu2198</strong>（粉丝50万+）的投资市场观点。
+            分类：<span style="color:#1976d2">美股</span> ·
+            <span style="color:#c62828">港股</span> ·
+            <span style="color:#e65100">A股点位</span> ·
+            <span style="color:#2e7d32">A股板块</span> ·
+            <span style="color:#f9a825">黄金</span> ·
+            <span style="color:#6a1b9a">其他投资观点</span>
+          </p>
+          <p class="date-line" id="date-line">数据截至 ——，共收录 N 条观点</p>
+        </div>
+      </section>
 
-    <!-- ========== 时间线（原文详情） ========== -->
-    <section class="timeline-section">
-      <h2>📜 原文详情</h2>
-      <div class="timeline" id="timeline"></div>
-    </section>
+      <div class="filter-bar">
+        <span class="filter-label">分类筛选</span>
+        <span class="filter-pill active" data-cat="all" onclick="filterBy('all')">全部</span>
+      </div>
 
-    <div class="page-footer">
-      ⚠️ 观点来源于微博公开内容，仅供研究参考，不构成投资建议。<br>
-      数据获取方式：当前为手动维护阶段，后续考虑自动化方案。
-    </div>
-  </main>
+      <section class="summary-card" id="levels-card">
+        <h2>🎯 关键点位 <span class="hint">支撑 / 阻力 / 收盘</span></h2>
+        <div id="levels-content"></div>
+      </section>
+
+      <section class="summary-card" id="hot-card">
+        <h2>🔥 热门观点 <span class="hint">点击标题查看原文</span></h2>
+        <div id="hot-content"></div>
+      </section>
+
+      <section class="timeline-section">
+        <h2>📜 原文详情</h2>
+        <div class="timeline" id="timeline"></div>
+      </section>
+
+      <div class="page-footer">
+        ⚠️ 观点来源于微博公开内容，仅供研究参考，不构成投资建议。<br>
+        数据获取方式：当前为手动维护阶段，后续考虑自动化方案。
+      </div>
+    </main>
+  </div>
 
   <script src="../data/wu2198_views.js"></script>
+
+  <!-- ========== 登录验证 JS ========== -->
+  <script>
+  (function() {
+    var USER = 'cbj';
+    var PASS = 'cbj';
+    var BG_IMG = '../assets/Abstract_financial_technology__2026-06-18T04-02-26.png';
+
+    var puzzleBox = document.getElementById('puzzle-box');
+    var puzzleBg = document.getElementById('puzzle-bg');
+    var puzzleHole = document.getElementById('puzzle-hole');
+    var puzzlePiece = document.getElementById('puzzle-piece');
+    var sliderTrack = document.getElementById('slider-track');
+    var sliderFill = document.getElementById('slider-fill');
+    var sliderThumb = document.getElementById('slider-thumb');
+    var sliderText = document.getElementById('slider-text');
+    var loginBtn = document.getElementById('login-btn');
+    var errEl = document.getElementById('login-err');
+    var userInput = document.getElementById('user-input');
+    var passInput = document.getElementById('pass-input');
+    var overlay = document.getElementById('login-overlay');
+
+    var sliderVerified = false;
+    var dragging = false;
+    var startX = 0, startLeft = 0, maxLeft = 0, targetX = 0, pieceStartX = 10;
+    var PIECE_SIZE = 42, TOLERANCE = 5;
+
+    function preloadImage(url, cb) {
+      var img = new Image();
+      img.onload = function() { cb(true); };
+      img.onerror = function() { cb(false); };
+      img.src = url;
+    }
+
+    function initPuzzle() {
+      var boxW = puzzleBox.clientWidth, boxH = puzzleBox.clientHeight;
+      if (boxW <= 0 || boxH <= 0) { setTimeout(initPuzzle, 100); return; }
+      puzzleBg.style.backgroundImage = 'url(' + BG_IMG + ')';
+      puzzleBg.style.backgroundSize = boxW + 'px ' + boxH + 'px';
+      var minTarget = Math.floor(boxW * 0.5);
+      var maxTarget = boxW - PIECE_SIZE - 10;
+      if (maxTarget <= minTarget) maxTarget = minTarget + 1;
+      targetX = Math.floor(minTarget + Math.random() * (maxTarget - minTarget));
+      var pieceTop = Math.floor((boxH - PIECE_SIZE) / 2);
+      puzzleHole.style.left = targetX + 'px';
+      puzzleHole.style.top = pieceTop + 'px';
+      puzzlePiece.style.left = pieceStartX + 'px';
+      puzzlePiece.style.top = pieceTop + 'px';
+      puzzlePiece.style.backgroundImage = 'url(' + BG_IMG + ')';
+      puzzlePiece.style.backgroundPosition = (-targetX) + 'px -' + pieceTop + 'px';
+      puzzlePiece.style.backgroundSize = boxW + 'px ' + boxH + 'px';
+      maxLeft = sliderTrack.clientWidth - sliderThumb.clientWidth - 4;
+      if (maxLeft <= 0) maxLeft = 200;
+    }
+
+    function getPieceRange() { return puzzleBox.clientWidth - PIECE_SIZE - 20; }
+
+    function setSliderPos(px) {
+      px = Math.max(2, Math.min(maxLeft + 2, px));
+      sliderThumb.style.left = px + 'px';
+      sliderFill.style.width = px + 'px';
+      var progress = (px - 2) / maxLeft;
+      puzzlePiece.style.left = (pieceStartX + progress * getPieceRange()) + 'px';
+    }
+
+    function verifyPiecePos(pieceX) {
+      if (Math.abs(pieceX - targetX) <= TOLERANCE) {
+        sliderVerified = true;
+        sliderThumb.classList.add('verified');
+        puzzlePiece.classList.add('verified');
+        sliderText.textContent = '✓ 验证通过';
+        checkReady(); return true;
+      }
+      return false;
+    }
+
+    sliderThumb.addEventListener('mousedown', function(e) {
+      if (sliderVerified) return;
+      dragging = true; startX = e.clientX;
+      startLeft = parseInt(sliderThumb.style.left) || 2;
+      sliderThumb.style.transition = 'none';
+      sliderFill.style.transition = 'none';
+      puzzlePiece.style.transition = 'none';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!dragging || sliderVerified) return;
+      setSliderPos(startLeft + (e.clientX - startX));
+    });
+    document.addEventListener('mouseup', function() {
+      if (!dragging) return; dragging = false;
+      sliderThumb.style.transition = 'left 0.3s ease';
+      sliderFill.style.transition = 'width 0.3s ease';
+      puzzlePiece.style.transition = 'left 0.3s ease';
+      if (!sliderVerified) {
+        var curX = parseFloat(puzzlePiece.style.left) || pieceStartX;
+        if (!verifyPiecePos(curX)) setSliderPos(2);
+      }
+    });
+    sliderThumb.addEventListener('touchstart', function(e) {
+      if (sliderVerified) return;
+      dragging = true; startX = e.touches[0].clientX;
+      startLeft = parseInt(sliderThumb.style.left) || 2;
+      sliderThumb.style.transition = 'none';
+      sliderFill.style.transition = 'none';
+      puzzlePiece.style.transition = 'none';
+      e.preventDefault();
+    });
+    document.addEventListener('touchmove', function(e) {
+      if (!dragging || sliderVerified) return;
+      setSliderPos(startLeft + (e.touches[0].clientX - startX));
+    });
+    document.addEventListener('touchend', function() {
+      if (!dragging) return; dragging = false;
+      sliderThumb.style.transition = 'left 0.3s ease';
+      sliderFill.style.transition = 'width 0.3s ease';
+      puzzlePiece.style.transition = 'left 0.3s ease';
+      if (!sliderVerified) {
+        var curX = parseFloat(puzzlePiece.style.left) || pieceStartX;
+        if (!verifyPiecePos(curX)) setSliderPos(2);
+      }
+    });
+
+    function checkReady() {
+      var ok = sliderVerified && userInput.value.trim() !== '' && passInput.value.trim() !== '';
+      loginBtn.classList.toggle('ready', ok);
+      loginBtn.disabled = !ok;
+    }
+    userInput.addEventListener('input', checkReady);
+    passInput.addEventListener('input', checkReady);
+
+    loginBtn.addEventListener('click', function() {
+      if (userInput.value.trim() !== USER || passInput.value.trim() !== PASS) {
+        errEl.textContent = '账号或密码错误，请重试'; return;
+      }
+      if (!sliderVerified) { errEl.textContent = '请先完成拼图验证'; return; }
+      errEl.textContent = '';
+      document.getElementById('login-overlay').classList.add('hidden');
+      document.getElementById('main-content').style.display = '';
+    });
+    passInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !loginBtn.disabled) loginBtn.click();
+    });
+
+    preloadImage(BG_IMG, function(ok) {
+      if (!ok) { sliderText.textContent = '⚠ 验证图片加载失败，请刷新重试'; return; }
+      initPuzzle();
+    });
+    window.addEventListener('resize', function() {
+      maxLeft = sliderTrack.clientWidth - sliderThumb.clientWidth - 4;
+      if (!sliderVerified) setSliderPos(2);
+    });
+  })();
+  </script>
+
+  <!-- ========== 页面渲染 JS ========== -->
   <script>
     (function() {
       var views = WU2198_VIEWS;
       var colors = WU2198_CATEGORY_COLORS;
       var icons = WU2198_CATEGORY_ICONS;
 
-      // 按日期倒序
       views.sort(function(a, b) {
         return (b.date + b.time).localeCompare(a.date + a.time);
       });
 
-      // 计算统计
       var cats = ["美股","港股","A股点位","A股板块","黄金","其他投资观点"];
       var counts = {};
       cats.forEach(function(c) { counts[c] = 0; });
       views.forEach(function(v) { counts[v.category]++; });
 
-      // 日期信息
       var latest = views.length > 0 ? views[0].date : '——';
       document.getElementById('date-line').textContent =
         '数据截至 ' + latest + '，共收录 ' + views.length + ' 条观点';
 
-      // 筛选按钮
       var filterBar = document.querySelector('.filter-bar');
       cats.forEach(function(c) {
         var span = document.createElement('span');
@@ -282,151 +539,83 @@
         filterBar.appendChild(span);
       });
 
-      // ==================== 关键点位渲染 ====================
       function renderLevels(filterCat) {
         var filtered = filterCat === 'all'
-          ? views
-          : views.filter(function(v) { return v.category === filterCat; });
-
-        // 只取有 levels 数据的
+          ? views : views.filter(function(v) { return v.category === filterCat; });
         var withLevels = filtered.filter(function(v) { return v.levels; });
-
         if (withLevels.length === 0) {
-          document.getElementById('levels-content').innerHTML =
-            '<div class="summary-empty">暂无点位数据</div>';
+          document.getElementById('levels-content').innerHTML = '<div class="summary-empty">暂无点位数据</div>';
           return;
         }
-
         var html = '<table class="levels-table"><thead><tr>' +
-          '<th style="width:75px">日期</th>' +
-          '<th style="width:100px">市场</th>' +
-          '<th>摘要</th>' +
-          '<th style="text-align:center">点位快照</th>' +
-          '<th style="width:70px"></th>' +
-          '</tr></thead><tbody>';
-
+          '<th style="width:75px">日期</th><th style="width:100px">市场</th><th>摘要</th>' +
+          '<th style="text-align:center">点位快照</th><th style="width:70px"></th></tr></thead><tbody>';
         withLevels.forEach(function(v) {
-          var catColor = colors[v.category] || { bg: '#eee', border: '#999', text: '#666' };
-
+          var cc = colors[v.category] || { bg:'#eee', border:'#999', text:'#666' };
           var chips = [];
-          if (v.levels.close !== null) {
-            chips.push('<span class="level-chip close"><span class="lbl">收盘</span> ' + v.levels.close + '</span>');
-          }
-          (v.levels.support || []).forEach(function(s) {
-            chips.push('<span class="level-chip support"><span class="lbl">支撑</span> ' + s + '</span>');
-          });
-          (v.levels.resistance || []).forEach(function(r) {
-            chips.push('<span class="level-chip resist"><span class="lbl">阻力</span> ' + r + '</span>');
-          });
-          if (v.levels.note) {
-            chips.push('<span style="font-size:11px;color:var(--muted);margin-left:4px">' + v.levels.note + '</span>');
-          }
-
-          html += '<tr>' +
-            '<td class="lev-date">' + v.date + '</td>' +
-            '<td><span class="lev-badge" style="background:' + catColor.bg +
-              ';color:' + catColor.text + ';border:1px solid ' + catColor.border + '">' +
-              icons[v.category] + ' ' + v.category + '</span></td>' +
-            '<td class="lev-summary">' + (v.summary || v.content.slice(0, 60) + '…') + '</td>' +
-            '<td class="lev-levels" style="text-align:center">' + chips.join('') + '</td>' +
-            '<td class="lev-link"><a href="' + v.source_url + '" target="_blank" rel="noopener">查看原文 →</a></td>' +
-            '</tr>';
+          if (v.levels.close !== null) chips.push('<span class="level-chip close"><span class="lbl">收盘</span> '+v.levels.close+'</span>');
+          (v.levels.support||[]).forEach(function(s){ chips.push('<span class="level-chip support"><span class="lbl">支撑</span> '+s+'</span>'); });
+          (v.levels.resistance||[]).forEach(function(r){ chips.push('<span class="level-chip resist"><span class="lbl">阻力</span> '+r+'</span>'); });
+          if (v.levels.note) chips.push('<span style="font-size:11px;color:var(--muted);margin-left:4px">'+v.levels.note+'</span>');
+          html += '<tr><td class="lev-date">'+v.date+'</td>' +
+            '<td><span class="lev-badge" style="background:'+cc.bg+';color:'+cc.text+';border:1px solid '+cc.border+'">'+icons[v.category]+' '+v.category+'</span></td>' +
+            '<td class="lev-summary">'+(v.summary||v.content.slice(0,60)+'…')+'</td>' +
+            '<td class="lev-levels" style="text-align:center">'+chips.join('')+'</td>' +
+            '<td class="lev-link"><a href="'+v.source_url+'" target="_blank" rel="noopener">查看原文 →</a></td></tr>';
         });
-
         html += '</tbody></table>';
         document.getElementById('levels-content').innerHTML = html;
       }
 
-      // ==================== 热门观点渲染 ====================
       function renderHot(filterCat) {
         var filtered = filterCat === 'all'
-          ? views
-          : views.filter(function(v) { return v.category === filterCat; });
-
+          ? views : views.filter(function(v) { return v.category === filterCat; });
         if (filtered.length === 0) {
-          document.getElementById('hot-content').innerHTML =
-            '<div class="summary-empty">暂无观点</div>';
+          document.getElementById('hot-content').innerHTML = '<div class="summary-empty">暂无观点</div>';
           return;
         }
-
         var html = '<ul class="hot-list">';
         filtered.forEach(function(v) {
-          var catColor = colors[v.category] || { bg: '#eee', border: '#999', text: '#666' };
-          html += '<li class="hot-item">' +
-            '<span class="hi-date">' + v.date + '</span>' +
-            '<span class="hi-cat" style="background:' + catColor.bg +
-              ';color:' + catColor.text + ';border:1px solid ' + catColor.border + '">' +
-              icons[v.category] + ' ' + v.category + '</span>' +
-            '<a class="hi-title" href="' + v.source_url + '" target="_blank" rel="noopener">' +
-              (v.summary || v.content.slice(0, 100)) + '</a>' +
-            '</li>';
+          var cc = colors[v.category] || { bg:'#eee', border:'#999', text:'#666' };
+          html += '<li class="hot-item"><span class="hi-date">'+v.date+'</span>' +
+            '<span class="hi-cat" style="background:'+cc.bg+';color:'+cc.text+';border:1px solid '+cc.border+'">'+icons[v.category]+' '+v.category+'</span>' +
+            '<a class="hi-title" href="'+v.source_url+'" target="_blank" rel="noopener">'+(v.summary||v.content.slice(0,100))+'</a></li>';
         });
         html += '</ul>';
         document.getElementById('hot-content').innerHTML = html;
       }
 
-      // ==================== 时间线渲染 ====================
       function renderTimeline(filterCat) {
         var filtered = filterCat === 'all'
-          ? views
-          : views.filter(function(v) { return v.category === filterCat; });
-
+          ? views : views.filter(function(v) { return v.category === filterCat; });
         if (filtered.length === 0) {
-          document.getElementById('timeline').innerHTML =
-            '<div class="empty-state">该分类暂无观点记录</div>';
+          document.getElementById('timeline').innerHTML = '<div class="empty-state">该分类暂无观点记录</div>';
           return;
         }
-
         var html = '';
         filtered.forEach(function(v) {
-          var catColor = colors[v.category] || { bg: '#eee', border: '#999', text: '#666' };
+          var cc = colors[v.category] || { bg:'#eee', border:'#999', text:'#666' };
           var tagsHTML = '';
-          if (v.tags && v.tags.length > 0) {
-            tagsHTML = '<div class="card-tags">' +
-              v.tags.map(function(t) {
-                return '<span class="card-tag">#' + t + '</span>';
-              }).join('') +
-              '</div>';
+          if (v.tags && v.tags.length) {
+            tagsHTML = '<div class="card-tags">'+v.tags.map(function(t){return '<span class="card-tag">#'+t+'</span>';}).join('')+'</div>';
           }
-          var verifiedHTML = v.verified
-            ? '<span class="verified-badge">✓ 已核实原文</span>'
-            : '';
-
-          html += '<div class="view-card">' +
-            '<div class="card-head">' +
-              '<span class="card-date">' + v.date + '</span>' +
-              '<span class="card-time">' + v.time + '</span>' +
-              '<span class="card-cat" style="background:' + catColor.bg +
-                ';color:' + catColor.text + ';border:1px solid ' + catColor.border + '">' +
-                icons[v.category] + ' ' + v.category + '</span>' +
-              tagsHTML +
-            '</div>' +
-            '<div class="card-body">' + v.content + '</div>' +
-            '<div class="card-foot">' +
-              verifiedHTML +
-              '<a href="' + v.source_url + '" target="_blank" rel="noopener">查看原文 →</a>' +
-            '</div>' +
-            '</div>';
+          var verifiedHTML = v.verified ? '<span class="verified-badge">✓ 已核实原文</span>' : '';
+          html += '<div class="view-card"><div class="card-head">' +
+            '<span class="card-date">'+v.date+'</span><span class="card-time">'+v.time+'</span>' +
+            '<span class="card-cat" style="background:'+cc.bg+';color:'+cc.text+';border:1px solid '+cc.border+'">'+icons[v.category]+' '+v.category+'</span>' +
+            tagsHTML+'</div><div class="card-body">'+v.content+'</div>' +
+            '<div class="card-foot">'+verifiedHTML+'<a href="'+v.source_url+'" target="_blank" rel="noopener">查看原文 →</a></div></div>';
         });
-
         document.getElementById('timeline').innerHTML = html;
       }
 
-      // 筛选切换
       window.filterBy = function(cat) {
         var pills = document.querySelectorAll('.filter-pill');
-        pills.forEach(function(p) {
-          p.classList.toggle('active', p.dataset.cat === cat);
-        });
-        renderLevels(cat);
-        renderHot(cat);
-        renderTimeline(cat);
+        pills.forEach(function(p) { p.classList.toggle('active', p.dataset.cat === cat); });
+        renderLevels(cat); renderHot(cat); renderTimeline(cat);
       };
 
-      // 初始渲染
-      renderLevels('all');
-      renderHot('all');
-      renderTimeline('all');
+      renderLevels('all'); renderHot('all'); renderTimeline('all');
     })();
   </script>
 </body>
