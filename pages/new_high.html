@@ -217,7 +217,7 @@
       boardHtml += '</div>';
 
       boardHtml += '<table class="holdings-table"><thead><tr>';
-      boardHtml += '<th>股票名称</th><th>PE TTM</th><th>简介</th><th>频次</th>';
+      boardHtml += '<th>股票名称</th><th style="text-align:center;width:72px;">PE TTM</th><th>简介</th><th>频次</th>';
       boardHtml += '</tr></thead><tbody>';
 
       for (var s2 = 0; s2 < stocks.length; s2++) {
@@ -227,7 +227,7 @@
         var peStr = pe ? pe.toFixed(2) : 'N/A';
         boardHtml += '<tr>';
         boardHtml += '<td><span class="stock-name">' + st.name + '</span><br><span class="stock-code">' + st.code + '</span></td>';
-        boardHtml += '<td style="text-align:center;font-weight:600;font-size:13px;">' + peStr + '</td>';
+        boardHtml += '<td style="text-align:center;font-weight:600;font-size:13px;width:72px;">' + peStr + '</td>';
         boardHtml += '<td><span class="stock-desc">' + st.intro + '</span></td>';
         boardHtml += '<td class="stock-freq"><span class="freq-bar-wrap"><span class="freq-bar-fill" style="width:' + pctWidth + 'px;background:' + board.fillColor + ';"></span></span><span class="freq-num">x' + st.count + '</span></td>';
         boardHtml += '</tr>';
