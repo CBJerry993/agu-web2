@@ -11,16 +11,23 @@
   .report-shell { max-width: 1400px; margin: 0 auto; padding: 0 16px 24px; }
   .report-heading { margin: 0 0 14px; }
   .main { padding: 0 0 24px; }
-  .stats-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-  .stat-card { background: white; border-radius: 10px; padding: 12px 18px; flex: 1; min-width: 130px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); border-top: 3px solid; text-align: center; }
-  .stat-card .val { font-size: 24px; font-weight: 700; line-height: 1.2; }
-  .stat-card .lbl { font-size: 11px; margin-top: 3px; }
-  .stat-card.red { border-color: #c0392b; }
-  .stat-card.red .val, .stat-card.red .lbl { color: #c0392b; }
-  .stat-card.green { border-color: #27ae60; }
-  .stat-card.green .val, .stat-card.green .lbl { color: #27ae60; }
-  .stat-card.blue { border-color: #1a5fac; }
-  .stat-card.blue .val, .stat-card.blue .lbl { color: #1a5fac; }
+
+  .chart-row { display: flex; gap: 16px; margin-bottom: 16px; align-items: stretch; }
+  .chart-box { flex: 0 0 260px; background: white; border-radius: 10px; padding: 16px 0 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); display: flex; flex-direction: column; align-items: center; }
+  .chart-box canvas { max-width: 200px; max-height: 200px; }
+  .chart-summary { flex: 1; display: flex; gap: 10px; }
+  .stat-card { background: white; border-radius: 10px; padding: 12px 18px; flex: 1; min-width: 100px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); display: flex; flex-direction: column; justify-content: center; }
+  .stat-card .val { font-size: 28px; font-weight: 700; line-height: 1.2; }
+  .stat-card .lbl { font-size: 12px; margin-top: 2px; color: var(--muted); }
+  .stat-card .sub { font-size: 13px; margin-top: 4px; }
+  .stat-card.bull { border-left: 4px solid #c0392b; }
+  .stat-card.bear { border-left: 4px solid #27ae60; }
+  .stat-card.neutral { border-left: 4px solid #8e9aaf; }
+  .stat-card.total { border-left: 4px solid #1a5fac; }
+  .bull-color { color: #c0392b; }
+  .bear-color { color: #27ae60; }
+  .neutral-color { color: #8e9aaf; }
+
   .cols { display: flex; gap: 12px; }
   .col { flex: 1; background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); overflow: hidden; }
   .col-hd { padding: 14px 18px 10px; font-size: 16px; font-weight: 800; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; border-left: 5px solid; }
@@ -63,27 +70,11 @@
   .idx-stats { display: flex; gap: 6px; padding: 6px 14px 8px; font-size: 11px; color: #888; justify-content: flex-end; }
   .idx-stats span { background: #f6f8fb; border-radius: 4px; padding: 1px 6px; }
   .page-footer { text-align: center; color: #aaa; font-size: 10px; padding: 16px; margin-top: 8px; }
-  @media (max-width: 1000px) { .cols { flex-direction: column; } }
+  @media (max-width: 1000px) { .cols { flex-direction: column; } .chart-row { flex-direction: column; } .chart-box { flex: none; width: 100%; max-width: 260px; margin: 0 auto; } .chart-summary { flex-wrap: wrap; } }
 </style>
 </head>
 <body>
-  <header class="site-header">
-    <nav class="nav">
-      <a class="brand" href="../index.html" aria-label="基金观察台首页">
-        <span class="brand-mark">F</span>
-        <span>基金观察台</span>
-      </a>
-      <div class="nav-links" aria-label="主要分类">
-        <a href="../index.html">首页</a>
-        <a href="gs145.html">GS145</a>
-        <a href="qdii.html">QDII</a>
-        <a href="top100.html">Top100</a>
-        <a class="active" href="etf_matrix.html">ETF矩阵</a>
-        <a href="../index.html#reports">报告</a>
-        <a href="../index.html#disclaimer">免责</a>
-      </div>
-    </nav>
-  </header>
+  <script src="../assets/nav.js"></script>
 
   <main class="report-shell">
     <section class="report-heading">
@@ -96,18 +87,30 @@
     </section>
 
     <div class="main">
-      <div class="stats-row">
-        <div class="stat-card blue">
-          <div class="val" id="totalS">--</div>
-          <div class="lbl">扫描ETF总数</div>
+      <div class="chart-row">
+        <div class="chart-box">
+          <canvas id="etfPie" role="img" aria-label="ETF多空分布饼图"></canvas>
         </div>
-        <div class="stat-card red">
-          <div class="val" id="bullN">--</div>
-          <div class="lbl">ETF多头（占比 <span id="bullP">--</span>）</div>
-        </div>
-        <div class="stat-card green">
-          <div class="val" id="bearN">--</div>
-          <div class="lbl">ETF空头（占比 <span id="bearP">--</span>）</div>
+        <div class="chart-summary">
+          <div class="stat-card total">
+            <div class="val" id="totalS">--</div>
+            <div class="lbl">扫描ETF总数</div>
+          </div>
+          <div class="stat-card bull">
+            <div class="val bull-color" id="bullN">--</div>
+            <div class="lbl">ETF多头</div>
+            <div class="sub" id="bullPct">占比 --</div>
+          </div>
+          <div class="stat-card bear">
+            <div class="val bear-color" id="bearN">--</div>
+            <div class="lbl">ETF空头</div>
+            <div class="sub" id="bearPct">占比 --</div>
+          </div>
+          <div class="stat-card neutral">
+            <div class="val neutral-color" id="neutralN">--</div>
+            <div class="lbl">观望/横盘</div>
+            <div class="sub" id="neutralPct">占比 --</div>
+          </div>
         </div>
       </div>
 
@@ -212,13 +215,25 @@ function renderIndex(tb, indices) {
 function renderMatrix(d) {
   window.__ETF_MATRIX_CURRENT_UPDATE_TIME = d.updateTime || '';
   document.getElementById('hdrTime').textContent = '数据更新：' + d.updateTime + ' · 下次扫描：' + d.nextScan;
-  document.getElementById('totalS').textContent = d.summary.totalScanned;
-  document.getElementById('bullN').textContent = d.summary.bullCount;
-  document.getElementById('bullP').textContent = d.summary.bullPct;
-  document.getElementById('bearN').textContent = d.summary.bearCount;
-  document.getElementById('bearP').textContent = d.summary.bearPct;
-  document.getElementById('bullCnt').textContent = 'ETF ' + d.summary.bullCount + ' · 指数 ' + ((d.bullIndices || []).length);
-  document.getElementById('bearCnt').textContent = 'ETF ' + d.summary.bearCount + ' · 指数 ' + ((d.bearIndices || []).length);
+
+  var total = d.summary.totalScanned;
+  var bull = d.summary.bullCount;
+  var bear = d.summary.bearCount;
+  var neutral = total - bull - bear;
+  var bullPct = (bull / total * 100).toFixed(1) + '%';
+  var bearPct = (bear / total * 100).toFixed(1) + '%';
+  var neutralPct = (neutral / total * 100).toFixed(1) + '%';
+
+  document.getElementById('totalS').textContent = total;
+  document.getElementById('bullN').textContent = bull;
+  document.getElementById('bullPct').textContent = '占比 ' + bullPct;
+  document.getElementById('bearN').textContent = bear;
+  document.getElementById('bearPct').textContent = '占比 ' + bearPct;
+  document.getElementById('neutralN').textContent = neutral;
+  document.getElementById('neutralPct').textContent = '占比 ' + neutralPct;
+
+  document.getElementById('bullCnt').textContent = 'ETF ' + bull + ' · 指数 ' + ((d.bullIndices || []).length);
+  document.getElementById('bearCnt').textContent = 'ETF ' + bear + ' · 指数 ' + ((d.bearIndices || []).length);
 
   renderETF(document.getElementById('bullTb'), d.bullETFs || [], true);
   renderETF(document.getElementById('bearTb'), d.bearETFs || [], false);
@@ -229,6 +244,8 @@ function renderMatrix(d) {
   renderIndex(document.getElementById('bearIdxTb'), bearIdx);
   document.getElementById('bullIdxCnt').textContent = '指数多头 ' + bullIdx.length + ' 个';
   document.getElementById('bearIdxCnt').textContent = '指数空头 ' + bearIdx.length + ' 个';
+
+  updatePieChart(total, bull, bear, neutral);
 }
 
 (function() {
@@ -309,6 +326,70 @@ function renderMatrix(d) {
       scheduleNextWindow();
     });
 })();
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script>
+  var etfPieChart = null;
+
+  function updatePieChart(total, bull, bear, neutral) {
+    var ctx = document.getElementById('etfPie');
+    if (!ctx) return;
+
+    var bullPct = bull / total * 100;
+    var labels = ['多头 ' + bullPct.toFixed(1) + '%', '空头', '观望'];
+    var data = [bull, bear, neutral];
+
+    if (etfPieChart) {
+      etfPieChart.data.labels = labels;
+      etfPieChart.data.datasets[0].data = data;
+      etfPieChart.update();
+      return;
+    }
+
+    etfPieChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: ['#c0392b', '#27ae60', '#b0b8c4'],
+          borderColor: '#fff',
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '58%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(c) {
+                var pct = (c.parsed / total * 100).toFixed(1);
+                return c.label.split(' ')[0] + ': ' + c.parsed + '只 (' + pct + '%)';
+              }
+            }
+          }
+        }
+      },
+      plugins: [{
+        id: 'centerText',
+        afterDraw: function(chart) {
+          var c = chart.ctx;
+          c.save();
+          c.font = '500 20px var(--font-sans, sans-serif)';
+          c.fillStyle = '#1a2035';
+          c.textAlign = 'center';
+          c.textBaseline = 'middle';
+          c.fillText(total, chart.width / 2, chart.height / 2 - 6);
+          c.font = '400 11px var(--font-sans, sans-serif)';
+          c.fillStyle = '#718097';
+          c.fillText('ETF total', chart.width / 2, chart.height / 2 + 14);
+          c.restore();
+        }
+      }]
+    });
+  }
   </script>
 </body>
 </html>
