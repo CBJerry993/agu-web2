@@ -6,91 +6,97 @@
 <title>港美股行情 - 基金观察台</title>
 <link rel="stylesheet" href="../assets/site.css">
 <style>
-  .watch-grid { display: grid; gap: 14px; }
-
-  .watch-block {
-    border: 1px solid var(--line);
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    background: white;
     border-radius: 8px;
-    background: var(--panel);
-    box-shadow: var(--shadow);
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    flex-wrap: wrap;
   }
 
-  .watch-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 16px 28px;
+  .tab-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 14px 8px;
     border: none;
-    background: none;
+    background: white;
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    position: relative;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
   }
 
-  .watch-toggle:hover { background: #f8fafc; }
+  .tab-btn:hover {
+    background: #f6f9ff;
+    color: #1a5fac;
+  }
 
-  .watch-title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 16px;
+  .tab-btn.active {
+    background: linear-gradient(135deg, #0d2b6e, #1a5fac);
+    color: #fff;
     font-weight: 800;
-    color: #0d2b6e;
+    border-bottom-color: #f9e79f;
   }
 
-  .watch-title::before {
-    content: '';
-    width: 4px; height: 20px;
-    background: #0d2b6e; border-radius: 2px;
-    flex-shrink: 0;
+  .tab-count {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.75;
+    margin-top: 2px;
   }
 
-  .watch-count {
-    font-size: 12px;
-    color: var(--muted);
-    font-weight: 500;
+  .tab-panel {
+    display: none;
   }
 
-  .watch-arrow {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    background: #eef2f7;
-    color: #0d2b6e;
-    display: grid; place-items: center;
-    font-size: 14px;
-    transition: transform 0.3s;
+  .tab-panel.active {
+    display: block;
   }
 
-  .watch-block.open .watch-arrow { transform: rotate(180deg); }
-
-  .watch-content {
-    max-height: 0; overflow: hidden;
-    transition: max-height 0.35s ease;
+  .sub-section {
+    background: white;
+    border-radius: 10px;
+    padding: 18px 22px 10px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    border-top: 3px solid;
   }
 
-  .watch-block.open .watch-content { max-height: 4000px; }
+  .sub-section.stock { border-color: #1a5fac; }
+  .sub-section.long  { border-color: #c0392b; }
+  .sub-section.short { border-color: #27ae60; }
 
-  .watch-inner { padding: 0 28px 24px; }
-
-  .sub-label {
+  .sub-head {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin: 18px 0 10px;
-    font-size: 14px;
-    font-weight: 700;
-    color: #222;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    font-weight: 800;
   }
 
-  .sub-label .dot {
-    display: inline-block;
-    width: 8px; height: 8px;
+  .sub-head .dot {
+    width: 10px; height: 10px;
     border-radius: 50%;
   }
 
-  .sub-label .dot.stock { background: #1a5fac; }
-  .sub-label .dot.long  { background: #c0392b; }
-  .sub-label .dot.short { background: #27ae60; }
+  .sub-head.stock .dot { background: #1a5fac; }
+  .sub-head.long .dot  { background: #c0392b; }
+  .sub-head.short .dot { background: #27ae60; }
+
+  .sub-count {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 4px;
+  }
 
   .etf-table {
     width: 100%;
@@ -98,16 +104,21 @@
     font-size: 13px;
   }
 
+  .etf-table thead tr {
+    background: linear-gradient(90deg, #0d2b6e, #1a5fac);
+    color: #fff;
+  }
+
   .etf-table thead th {
-    background: #f0f3f8;
     padding: 8px 12px;
     font-size: 11px;
     font-weight: 600;
-    color: var(--muted);
     text-align: left;
-    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,0.15);
   }
 
+  .etf-table thead th:last-child { border-right: none; }
   .etf-table thead th:first-child { padding-left: 16px; }
   .etf-table thead th:last-child { padding-right: 16px; }
 
@@ -120,31 +131,28 @@
   .etf-table tbody td:first-child { padding-left: 16px; }
   .etf-table tbody td:last-child { padding-right: 16px; }
 
-  .etf-table tbody tr:hover { background: #f8fafc; }
+  .etf-table tbody tr {
+    transition: all 0.2s ease;
+  }
+
+  .etf-table tbody tr:hover {
+    background: #f6f9ff !important;
+    transform: translateX(6px);
+    box-shadow: 0 2px 12px rgba(26,95,172,0.10);
+  }
+
+  .etf-table tbody tr.row-even { background: #fafbfe; }
+  .etf-table tbody tr.row-odd { background: #fff; }
 
   .code-link {
     color: #1a5fac;
     text-decoration: none;
-    font-weight: 600;
-    font-family: 'SF Mono', 'Consolas', monospace;
+    font-weight: 700;
+    font-family: 'SF Mono','Consolas',monospace;
     font-size: 13px;
   }
 
   .code-link:hover { text-decoration: underline; }
-
-  .lev-badge {
-    display: inline-flex;
-    align-items: center;
-    min-height: 20px;
-    padding: 0 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-  }
-
-  .lev-badge.long  { background: #fde8e8; color: #c0392b; }
-  .lev-badge.short { background: #e8f5e9; color: #27ae60; }
-  .lev-badge.lev1  { background: #eff4fd; color: #1a5fac; }
 
   .dir-tag {
     display: inline-flex;
@@ -158,12 +166,34 @@
 
   .dir-tag.long  { background: #fde8e8; color: #c0392b; }
   .dir-tag.short { background: #e8f5e9; color: #27ae60; }
+  .dir-tag.spot  { background: #eff4fd; color: #1a5fac; }
+
+  .lev-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 4px;
+  }
+
+  .lev-badge.long  { background: #fde8e8; color: #c0392b; }
+  .lev-badge.short { background: #e8f5e9; color: #27ae60; }
+  .lev-badge.lev1  { background: #eff4fd; color: #1a5fac; }
+
+  .note-text {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 6px;
+  }
 
   @media (max-width: 700px) {
-    .watch-toggle { padding: 14px 16px; }
-    .watch-inner { padding: 0 16px 20px; }
+    .tab-bar { flex-wrap: wrap; }
+    .tab-btn { min-width: 80px; font-size: 12px; padding: 12px 6px; }
+    .sub-section { padding: 12px 14px 8px; }
     .etf-table { font-size: 12px; }
-    .etf-table thead th, .etf-table tbody td { padding: 6px 8px; }
   }
 </style>
 </head>
@@ -180,15 +210,18 @@
     </div>
   </section>
 
-  <div class="watch-grid" id="watchGrid"></div>
+  <!-- Tab Bar -->
+  <div class="tab-bar" id="tabBar"></div>
+
+  <!-- Tab Panels -->
+  <div id="tabPanels"></div>
 
 </main>
 
 <script>
 // ============ 数据定义 ============
 var WATCH_DATA = [
-
-  // ===== 1. 美股主要指数 =====
+  // 0: 美股主要指数
   {
     title: '美股主要指数',
     stock: [
@@ -197,8 +230,8 @@ var WATCH_DATA = [
       { name: '道琼斯工业指数', code: '.DJI', note: '基准' }
     ],
     long: [
-      { name: '标普500ETF', code: 'SPY', lev: '1x' },
       { name: '标普500ETF-Vanguard', code: 'VOO', lev: '1x' },
+      { name: '标普500ETF', code: 'SPY', lev: '1x' },
       { name: '两倍做多标普500', code: 'SSO', lev: '2x' },
       { name: '三倍做多标普500', code: 'UPRO', lev: '3x' },
       { name: '纳指100ETF', code: 'QQQ', lev: '1x' },
@@ -219,17 +252,17 @@ var WATCH_DATA = [
     ]
   },
 
-  // ===== 2. 美股七巨头 =====
+  // 1: 美股七巨头
   {
     title: '美股七巨头',
     stock: [
-      { name: '英伟达', code: 'NVDA', note: 'GPU/AI芯片龙头' },
-      { name: '苹果', code: 'AAPL', note: '消费电子龙头' },
+      { name: '英伟达', code: 'NVDA', note: 'GPU/AI芯片' },
+      { name: '苹果', code: 'AAPL', note: '消费电子' },
       { name: '微软', code: 'MSFT', note: '云计算+AI' },
       { name: '谷歌', code: 'GOOG', note: '搜索+AI' },
-      { name: '亚马逊', code: 'AMZN', note: '电商+云计算' },
+      { name: '亚马逊', code: 'AMZN', note: '电商+云' },
       { name: 'Meta', code: 'META', note: '社交+AI' },
-      { name: '特斯拉', code: 'TSLA', note: '电动车+AI' }
+      { name: '特斯拉', code: 'TSLA', note: '电动车' }
     ],
     long: [
       { name: '2倍做多英伟达', code: 'NVDL', lev: '2x' },
@@ -251,7 +284,7 @@ var WATCH_DATA = [
     ]
   },
 
-  // ===== 3. 中国市场相关 =====
+  // 2: 中国市场相关
   {
     title: '中国市场相关',
     stock: [
@@ -269,12 +302,12 @@ var WATCH_DATA = [
     ]
   },
 
-  // ===== 4. 港股市场 =====
+  // 3: 港股市场
   {
     title: '港股市场',
     stock: [
-      { name: '盈富基金(恒指)', code: '02800', note: '港股旗舰ETF' },
-      { name: '恒生中国企业ETF', code: '02828', note: 'H股ETF' },
+      { name: '盈富基金(恒指)', code: '02800', note: '旗舰ETF' },
+      { name: '恒生中国企业ETF', code: '02828', note: 'H股' },
       { name: '南方A50', code: '02822', note: 'A股ETF' },
       { name: '恒生科技ETF', code: '03033', note: '恒科1x' },
       { name: '腾讯控股', code: '00700', note: '港股' },
@@ -297,7 +330,7 @@ var WATCH_DATA = [
     ]
   },
 
-  // ===== 5. 大宗商品 =====
+  // 4: 大宗商品
   {
     title: '大宗商品',
     stock: [
@@ -305,9 +338,7 @@ var WATCH_DATA = [
       { name: 'SPDR黄金ETF', code: 'GLD', note: '追踪金价' }
     ],
     long: [
-      { name: '美国原油ETF', code: 'USO', lev: '1x' },
       { name: '两倍做多原油', code: 'UCO', lev: '2x' },
-      { name: 'SPDR黄金ETF', code: 'GLD', lev: '1x' },
       { name: '两倍做多黄金', code: 'UGL', lev: '2x' },
       { name: '南方两倍做多黄金', code: '07299', lev: '2x' }
     ],
@@ -318,7 +349,7 @@ var WATCH_DATA = [
     ]
   },
 
-  // ===== 6. 外汇与波动率 =====
+  // 5: 外汇与波动率
   {
     title: '外汇与波动率',
     stock: [],
@@ -332,7 +363,7 @@ var WATCH_DATA = [
     ]
   },
 
-  // ===== 7. 其他市场 =====
+  // 6: 其他市场
   {
     title: '其他市场',
     stock: [],
@@ -363,64 +394,67 @@ function dirLabel(lev) {
 
 function renderTable(items, type) {
   if (!items || !items.length) return '';
-  var cls = type === 'long' ? 'long' : type === 'short' ? 'short' : '';
-  var rows = items.map(function(it) {
-    return '<tr>' +
-      '<td>' + it.name + (it.note ? ' <span style="font-size:11px;color:var(--muted)">' + it.note + '</span>' : '') + '</td>' +
+  var cls = type === 'long' ? 'long' : type === 'short' ? 'short' : 'spot';
+  var rows = items.map(function(it, i) {
+    var rowClass = i % 2 === 0 ? 'row-even' : 'row-odd';
+    var levCell = type === 'stock'
+      ? '<td><span class="dir-tag spot">正股</span></td>'
+      : '<td><span class="dir-tag ' + cls + '">' + dirLabel(it.lev) + '</span><span class="lev-badge ' + levClass(it.lev) + '">' + it.lev + '</span></td>';
+    return '<tr class="' + rowClass + '">' +
+      '<td>' + it.name + (it.note ? '<span class="note-text">' + it.note + '</span>' : '') + '</td>' +
       '<td><a class="code-link" href="https://xueqiu.com/S/' + it.code + '" target="_blank" rel="noopener">' + it.code + '</a></td>' +
-      (type === 'stock'
-        ? '<td></td>'
-        : '<td><span class="dir-tag ' + cls + '">' + dirLabel(it.lev) + '</span> <span class="lev-badge ' + levClass(it.lev) + '">' + it.lev + '</span></td>') +
+      levCell +
       '</tr>';
   }).join('');
 
-  var headers = type === 'stock'
-    ? '<thead><tr><th>名称</th><th>代码</th><th></th></tr></thead>'
-    : '<thead><tr><th>名称</th><th>代码</th><th>方向/杠杆</th></tr></thead>';
-
-  return headers + '<tbody>' + rows + '</tbody>';
+  return '<thead><tr><th>名称</th><th>代码</th><th>方向 / 杠杆</th></tr></thead><tbody>' + rows + '</tbody>';
 }
 
-function renderGroup(g) {
-  var dotStock = g.stock && g.stock.length
-    ? '<div class="sub-label"><span class="dot stock"></span>正股<span style="font-weight:400;color:var(--muted);margin-left:4px">' + g.stock.length + ' 个</span></div>' +
-      '<table class="etf-table">' + renderTable(g.stock, 'stock') + '</table>'
-    : '';
+function renderPanel(g) {
+  var html = '';
+  if (g.stock && g.stock.length) {
+    html += '<div class="sub-section stock">' +
+      '<div class="sub-head stock"><span class="dot"></span>正股<span class="sub-count">' + g.stock.length + ' 个</span></div>' +
+      '<table class="etf-table">' + renderTable(g.stock, 'stock') + '</table></div>';
+  }
+  if (g.long && g.long.length) {
+    html += '<div class="sub-section long">' +
+      '<div class="sub-head long"><span class="dot"></span>做多ETF<span class="sub-count">' + g.long.length + ' 个</span></div>' +
+      '<table class="etf-table">' + renderTable(g.long, 'long') + '</table></div>';
+  }
+  if (g.short && g.short.length) {
+    html += '<div class="sub-section short">' +
+      '<div class="sub-head short"><span class="dot"></span>做空ETF<span class="sub-count">' + g.short.length + ' 个</span></div>' +
+      '<table class="etf-table">' + renderTable(g.short, 'short') + '</table></div>';
+  }
+  return html;
+}
 
-  var dotLong = g.long && g.long.length
-    ? '<div class="sub-label"><span class="dot long"></span>做多ETF<span style="font-weight:400;color:var(--muted);margin-left:4px">' + g.long.length + ' 个</span></div>' +
-      '<table class="etf-table">' + renderTable(g.long, 'long') + '</table>'
-    : '';
-
-  var dotShort = g.short && g.short.length
-    ? '<div class="sub-label"><span class="dot short"></span>做空ETF<span style="font-weight:400;color:var(--muted);margin-left:4px">' + g.short.length + ' 个</span></div>' +
-      '<table class="etf-table">' + renderTable(g.short, 'short') + '</table>'
-    : '';
-
+// 渲染 tab 栏
+var tabBarHTML = '';
+WATCH_DATA.forEach(function(g, i) {
   var total = (g.stock ? g.stock.length : 0) + (g.long ? g.long.length : 0) + (g.short ? g.short.length : 0);
+  tabBarHTML += '<button class="tab-btn" onclick="switchTab(' + i + ')">' + g.title + '<span class="tab-count">' + total + ' 只</span></button>';
+});
+document.getElementById('tabBar').innerHTML = tabBarHTML;
 
-  return '<div class="watch-block" id="group' + WATCH_DATA.indexOf(g) + '">' +
-    '<button class="watch-toggle" onclick="this.parentElement.classList.toggle(\'open\')">' +
-      '<span class="watch-title">' + g.title + '</span>' +
-      '<span style="display:flex;align-items:center;gap:12px;">' +
-        '<span class="watch-count">' + total + ' 只</span>' +
-        '<span class="watch-arrow">▾</span>' +
-      '</span>' +
-    '</button>' +
-    '<div class="watch-content"><div class="watch-inner">' +
-      dotStock + dotLong + dotShort +
-    '</div></div>' +
-  '</div>';
-}
+// 渲染面板
+var panelHTML = '';
+WATCH_DATA.forEach(function(g) {
+  panelHTML += '<div class="tab-panel">' + renderPanel(g) + '</div>';
+});
+document.getElementById('tabPanels').innerHTML = panelHTML;
 
-document.getElementById('watchGrid').innerHTML = WATCH_DATA.map(renderGroup).join('');
+// 切换 tab
+window.switchTab = function(idx) {
+  var btns = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.tab-panel');
+  btns.forEach(function(b, i) { b.classList.toggle('active', i === idx); });
+  panels.forEach(function(p, i) { p.classList.toggle('active', i === idx); });
+};
 
-// 默认展开前两组
-(function() {
-  var blocks = document.querySelectorAll('.watch-block');
-  if (blocks[0]) blocks[0].classList.add('open');
-  if (blocks[1]) blocks[1].classList.add('open');
-})();
+// 默认选中第一个
+switchTab(0);
 </script>
 </body>
 </html>
