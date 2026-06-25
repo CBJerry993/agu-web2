@@ -217,19 +217,18 @@
       boardHtml += '</div>';
 
       boardHtml += '<table class="holdings-table"><thead><tr>';
-      boardHtml += '<th>股票名称</th><th>简介</th><th>频次</th><th>PE TTM</th>';
+      boardHtml += '<th>股票名称</th><th>简介</th><th>频次</th>';
       boardHtml += '</tr></thead><tbody>';
 
       for (var s2 = 0; s2 < stocks.length; s2++) {
         var st = stocks[s2];
         var pctWidth = Math.round(st.count / maxCount * 100);
         var pe = PE_TTM_DATA[st.code];
-        var peStr = pe ? pe.toFixed(2) : (pe === 0 ? '0.00' : 'N/A');
+        var peStr = pe ? ' PE ' + pe.toFixed(2) : '';
         boardHtml += '<tr>';
-        boardHtml += '<td><span class="stock-name">' + st.name + '</span><br><span class="stock-code">' + st.code + '</span></td>';
+        boardHtml += '<td><span class="stock-name">' + st.name + '</span><span style="font-size:12px;color:#718097;">' + peStr + '</span><br><span class="stock-code">' + st.code + '</span></td>';
         boardHtml += '<td><span class="stock-desc">' + st.intro + '</span></td>';
         boardHtml += '<td class="stock-freq"><span class="freq-bar-wrap"><span class="freq-bar-fill" style="width:' + pctWidth + 'px;background:' + board.fillColor + ';"></span></span><span class="freq-num">x' + st.count + '</span></td>';
-        boardHtml += '<td style="text-align:center;font-weight:700;font-size:14px;">' + peStr + '</td>';
         boardHtml += '</tr>';
       }
       boardHtml += '</tbody></table></div>';
