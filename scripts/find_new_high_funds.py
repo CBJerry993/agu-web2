@@ -40,22 +40,28 @@ def ttfund_invoke(skill_id: str, payload: dict) -> dict:
         return {}
 
 
-def query_funds(rsf_type: str, top_n: int = 50) -> list[dict]:
-    """查询指定类型的基金列表，按近1年收益倒序"""
+def query_funds_all(page_index: int, top_n: int = 50) -> list[dict]:
+    """查询全类型基金列表(不分rsfType), 按近1年收益倒序, 支持翻页"""
     body = {
-        "pageIndex": 1,
+        "pageIndex": page_index,
         "pageNum": top_n,
-        "rsfType": rsf_type,
         "orderField": "5_6_-1",  # 近1年收益率倒序
         "establishPeriod": "2",   # 成立满1年
-        "abnormal": "3",          # 排除异常
+        "abnormal": "2",          # 不排除异常值(避免误杀正常高波动基金如001170)
         "isSale": "1",            # 代销
         "rankSy": "1",            # 外透排行
     }
     raw = ttfund_invoke("TTFUND_CONDITION_SELECT", body)
     data = raw.get("Data") or raw.get("data") or []
-    print(f"  {rsf_type}: {len(data)} funds returned")
-    return data
+    # 只保留股票型(001)和混合型(002)
+    filtered = []
+    for f in data:
+        info = f.get("info") or {}
+        ftype = str(info.get("FUNDTYPE") or "")
+        if ftype in ("001", "002"):
+            filtered.append(f)
+    print(f"  page {page_index}: {len(data)} returned, {len(filtered)} kept (stock/hybrid only)")
+    return filtered
 
 
 def get_nav_history(fcode: str) -> list[dict]:
@@ -211,18 +217,17 @@ def main():
     print(f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print("=" * 60)
 
-    # 1. 获取股票型 + 混合型基金列表
-    print("\n[1/3] 获取基金列表...")
-    stock_funds = query_funds("001", 50)
-    hybrid_funds = query_funds("002", 50)
-
-    seen = set()
+    # 1. 获取全类型基金, Python侧按FUNDTYPE过滤股票型+混合型, 取Top100
+    print("\n[1/3] 获取基金列表(全类型, 翻页取Top100)...")
     all_funds = []
-    for f in stock_funds + hybrid_funds:
-        code = get_fund_code(f)
-        if code not in seen:
-            seen.add(code)
-            all_funds.append(f)
+    seen = set()
+    for pg in (1, 2):
+        page_funds = query_funds_all(pg, 50)
+        for f in page_funds:
+            code = get_fund_code(f)
+            if code not in seen:
+                seen.add(code)
+                all_funds.append(f)
 
     all_funds.sort(key=get_year_return, reverse=True)
     candidates = all_funds[:100]
