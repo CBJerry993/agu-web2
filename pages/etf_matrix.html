@@ -60,11 +60,12 @@
   .ma-badge.hi { background: #e8f5e9; color: #2e7d32; }
   .ma-badge.mid { background: #fff3e0; color: #e65100; }
   .ma-badge.lo { background: #f5f5f5; color: #888; }
+  .boll { font-size: 12px; color: #888; width: 56px; font-weight: 600; }
+  .boll.boll-over { color: #e63946; }
   .nm { font-weight: 600; color: #1a2035; font-size: 13px; }
   .cd { color: #1a5fac; font-size: 13px; font-weight: 600; }
   .cd a { color: #1a5fac; text-decoration: none; }
   .cd a:hover { text-decoration: underline; }
-  .pr { font-size: 14px; font-weight: 600; }
   .ch { font-weight: 700; font-size: 14px; }
   .ch.up { color: #e63946; }
   .ch.dn { color: #2ba84a; }
@@ -108,12 +109,12 @@
           <div class="col-hd bull">均线多头排列 <span class="cnt" id="bullCnt">--</span></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>ETF名称</th><th>代码</th><th>价格</th><th>涨跌幅</th><th>强度</th><th>次数</th></tr></thead>
+              <thead><tr><th>ETF名称</th><th>代码</th><th>涨跌幅</th><th>强度</th><th>日布林</th><th>周布林</th><th>次数</th></tr></thead>
               <tbody id="bullTb"></tbody>
             </table>
             <div class="idx-divider"><span>核心指数</span></div>
             <table class="idx-table">
-              <thead><tr><th>指数名称</th><th>代码</th><th>涨跌幅</th><th>次数</th></tr></thead>
+              <thead><tr><th>指数名称</th><th>代码</th><th>涨跌幅</th><th>日布林</th><th>周布林</th><th>次数</th></tr></thead>
               <tbody id="bullIdxTb"></tbody>
             </table>
             <div class="idx-stats"><span id="bullIdxCnt">--</span></div>
@@ -124,12 +125,12 @@
           <div class="col-hd bear">均线空头排列 <span class="cnt" id="bearCnt">--</span></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>ETF名称</th><th>代码</th><th>价格</th><th>涨跌幅</th><th>强度</th><th>次数</th></tr></thead>
+              <thead><tr><th>ETF名称</th><th>代码</th><th>涨跌幅</th><th>强度</th><th>日布林</th><th>周布林</th><th>次数</th></tr></thead>
               <tbody id="bearTb"></tbody>
             </table>
             <div class="idx-divider"><span>核心指数</span></div>
             <table class="idx-table">
-              <thead><tr><th>指数名称</th><th>代码</th><th>涨跌幅</th><th>次数</th></tr></thead>
+              <thead><tr><th>指数名称</th><th>代码</th><th>涨跌幅</th><th>日布林</th><th>周布林</th><th>次数</th></tr></thead>
               <tbody id="bearIdxTb"></tbody>
             </table>
             <div class="idx-stats"><span id="bearIdxCnt">--</span></div>
@@ -167,19 +168,21 @@ function idxXqUrl(code) {
 
 function renderETF(tb, funds, isBull) {
   if (!funds.length) {
-    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ccc;padding:24px">暂无数据</td></tr>';
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ccc;padding:24px">暂无数据</td></tr>';
     return;
   }
   tb.innerHTML = funds.map(function(f) {
-    var pr = typeof f.price === 'number' ? f.price.toFixed(4) : f.price;
     var change = f.change || '0.00%';
     var xq = xqUrl(f.code);
+    var db = f.bollDailyGap || '--';
+    var wb = f.bollWeeklyGap || '--';
     return '<tr>'
       + '<td class="nm">' + f.name + '</td>'
       + '<td class="cd"><a href="' + xq + '" target="_blank">' + f.code + '</a></td>'
-      + '<td class="pr">' + pr + '</td>'
       + '<td class="ch ' + (change.startsWith('+') ? 'up' : 'dn') + '">' + change + '</td>'
       + '<td class="str ' + (isBull ? 'up' : 'dn') + '">' + f.strength + '</td>'
+      + '<td class="boll ' + (db.startsWith('-') ? 'boll-over' : '') + '">' + db + '</td>'
+      + '<td class="boll ' + (wb.startsWith('-') ? 'boll-over' : '') + '">' + wb + '</td>'
       + '<td><span class="ma-badge ' + badgeCls(f.maCount) + '">' + f.maCount + '</span></td>'
       + '</tr>';
   }).join('');
@@ -187,16 +190,20 @@ function renderETF(tb, funds, isBull) {
 
 function renderIndex(tb, indices) {
   if (!indices.length) {
-    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ccc;padding:16px">暂无数据</td></tr>';
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ccc;padding:16px">暂无数据</td></tr>';
     return;
   }
   tb.innerHTML = indices.map(function(f) {
     var change = f.change || '0.00%';
     var xq = idxXqUrl(f.code);
+    var db = f.bollDailyGap || '--';
+    var wb = f.bollWeeklyGap || '--';
     return '<tr>'
       + '<td class="nm">' + f.name + '</td>'
       + '<td class="cd"><a href="' + xq + '" target="_blank">' + f.code + '</a></td>'
       + '<td class="ch ' + (change.startsWith('+') ? 'up' : 'dn') + '">' + change + '</td>'
+      + '<td class="boll ' + (db.startsWith('-') ? 'boll-over' : '') + '">' + db + '</td>'
+      + '<td class="boll ' + (wb.startsWith('-') ? 'boll-over' : '') + '">' + wb + '</td>'
       + '<td><span class="ma-badge ' + badgeCls(f.maCount) + '">' + f.maCount + '</span></td>'
       + '</tr>';
   }).join('');
