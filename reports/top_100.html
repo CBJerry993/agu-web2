@@ -8,16 +8,6 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f0f3f8; color: #1a2035; font-size: 12px; }
 
-  .page-header {
-    background: linear-gradient(135deg, #0d2b6e 0%, #1a5fac 50%, #0d8fd9 100%);
-    color: white; padding: 22px 28px 18px; position: relative; overflow: hidden;
-  }
-  .page-header::after { content: ''; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.06); }
-  .page-header h1 { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
-  .page-header .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
-  .page-header .subtitle { font-size: 14px; opacity: 0.85; margin-top: 6px; }
-  .page-header .update-time { font-size: 13px; opacity: 0.7; margin-top: 3px; text-align: right; }
-
   .main { padding: 16px; max-width: 1200px; margin: 0 auto; }
 
   .stats-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -149,14 +139,8 @@
 </head>
 <body>
 
-<div class="page-header">
-  <div class="eyebrow">Top100 Report</div>
-  <h1>全市场Top100基金收益排行</h1>
-  <div class="subtitle">今年以来收益率排名 · 夯/顶/人上人/拉/NPC五级分类 · 涨幅 &amp; 同类排名</div>
-  <div class="update-time" id="update-time">加载中...</div>
-</div>
-
 <div class="main">
+  <div id="update-time" style="display:none"></div>
   <div class="stats-row" id="stats">
     <div class="loading">数据加载中...</div>
   </div>
